@@ -1,13 +1,16 @@
 ### CREATING AN EVENT CLASS ###
 
 
-1) Gather training videos that contain the event, gather "neutral" videos that will act as background.
+1) Gather positive training videos that contain the event, gather "neutral" videos that will act as background.
 	-> training and background videos are considered as a single shot
 	-> to cut the interesting slice you can use a package such as ffmpeg.
+	-> you are allowed to use spaces in video names
 
 2) Save your videos in the "BASE_DIR/videos" directory (you can organize them in subdirectories for easier handling).
 
 3) Create a directory "BASE_DIR/events/Your_Event_Name".
+
+	-> you are allowed to use spaces in event names
 
 4) In this directory, create two files:
 	-> training.txt: contains the list of access paths to your training videos

@@ -19,16 +19,16 @@ USAGE_STRING="
 #
 #	--ignore-missing
 #		continues even if some videos do not exist
+#   
+#   EVENT_NAME
 #
 # Prepares the directory structure and creates jobs to be executed.
 # Does not overwrite existing data unless explicitly asked.
 "
 
-source required_components/bash_utils.sh
+source processing/usr/scripts/bash_utils.sh
 set -e
 set -u
-ERROR_COLOR="${TXT_BOLD}${TXT_RED}ERROR${TXT_RESET}"
-WARNING_COLOR="${TXT_RED}WARNING${TXT_RESET}"
 
 ##
 ## PARSE ARGUMENTS
@@ -78,6 +78,8 @@ if [[ "$EVENT_NAME" == "" ]]; then
 	echo "$USAGE_STRING"
 	exit 1
 fi
+echo      "--------------------"
+log_TITLE "Event initialization"
 
 EV_DIR="events/${EVENT_NAME}"
 WORK_DIR="$EV_DIR/workdir"
@@ -88,16 +90,16 @@ if [[ "$POSITIVE_FILE" == "" ]]; then POSITIVE_FILE="$EV_DIR/positive.txt"; fi
 if [[ "$BACKGROUND_FILE" == "" ]]; then BACKGROUND_FILE="$EV_DIR/background.txt"; fi
 COMP_DESC_QUEUE_FILE="$WORK_DIR/compute_descriptors_queue"
 
-echo -e "${TXT_BOLD}Creating \"$EVENT_NAME\"${TXT_RESET} (overwrite=${OVERWRITE}, ignore-missing=${IGNORE_MISSING})"
-echo "Positive videos: \"$POSITIVE_FILE\""
-echo "Background videos: \"$BACKGROUND_FILE\""
-echo ""
+log_INFO "${TXT_BOLD}Creating \"$EVENT_NAME\"${TXT_RESET} (overwrite=${OVERWRITE}, ignore-missing=${IGNORE_MISSING})"
+log_INFO "Positive videos: \"$POSITIVE_FILE\""
+log_INFO "Background videos: \"$BACKGROUND_FILE\""
+log_INFO ""
 
 #
 # CHECK IF EVENT ALREADY EXISTS
 #
 if [[ -e "$STATUS_FILE" && $OVERWRITE == NO ]]; then
-	echo "${ERROR_COLOR}: \"$EVENT_NAME\" is already initialized. Use --overwrite option to ignore this message."
+	log_ERR "\"$EVENT_NAME\" is already initialized. Use --overwrite option to ignore this message."
 	exit 1
 fi
 
@@ -110,14 +112,14 @@ VIDEOS=()
 # 1) EXISTS
 if [[ ! -e "$POSITIVE_FILE" || ! -e "$BACKGROUND_FILE" ]]; then
 	echo "$USAGE_STRING"
-	echo "${ERROR_COLOR}: expecting \"$POSITIVE_FILE\" and \"$BACKGROUND_FILE\""
+	log_ERR "expecting \"$POSITIVE_FILE\" and \"$BACKGROUND_FILE\""
 	exit 1
 fi
 
 # 2) NON-EMPTY
 if [[ `cat "$POSITIVE_FILE" | wc -l` < 1 || `cat "$BACKGROUND_FILE" | wc -l` < 1 ]]; then
 	echo "$USAGE_STRING"
-	echo "${ERROR_COLOR}: expecting non-empty \"$POSITIVE_FILE\" and \"$BACKGROUND_FILE\""
+	log_ERR "expecting non-empty \"$POSITIVE_FILE\" and \"$BACKGROUND_FILE\""
 	exit 1
 fi
 
@@ -126,7 +128,6 @@ NB_MISSING=0
 echo -n "" > missing_videos.txt
 echo -n "" > "$WORK_DIR/_background.txt"
 echo -n "" > "$WORK_DIR/_positive.txt"
-sync
 
 while read -r video; do
 	if [[ ! -e "videos/$video" ]]; then
@@ -147,9 +148,9 @@ while read -r video; do
 	fi
 done < "$BACKGROUND_FILE"
 if [[ $NB_MISSING > 0 ]]; then
-	echo -e "${WARNING_COLOR}: $NB_MISSING missing videos, see \"missing_videos.txt\" for the complete list."
+	log_WARN "$NB_MISSING missing videos, see \"missing_videos.txt\" for the complete list."
 	if [[ $IGNORE_MISSING == NO ]]; then
-		echo "Use option --ignore-missing if you wish to continue anyway."
+		log_INFO "Use option --ignore-missing if you wish to continue anyway."
 		exit 1
 	fi
 fi
@@ -157,20 +158,22 @@ fi
 #
 # APPEND JOBS
 #
-echo -e "Found ${#VIDEOS[@]} videos.\n"
+log_INFO "Found ${#VIDEOS[@]} videos."
+log_INFO ""
 
 if [[ -e "$COMP_DESC_QUEUE_FILE" ]]; then
-	echo "${WARNING_COLOR}: processing queue already exists, overwriting content."
+	log_WARN "processing queue already exists, overwriting content."
 fi
 (
 	for (( i=0; i < ${#VIDEOS[@]}; i++ )); do
 		echo "${VIDEOS[${i}]}"
 	done
 ) > "$COMP_DESC_QUEUE_FILE"
-echo -e "Registered videos for processing in \"$COMP_DESC_QUEUE_FILE\".\n"
+log_INFO "Registered videos for processing in \"$COMP_DESC_QUEUE_FILE\"."
+log_INFO ""
 
+log_TODO "Ask user for channels to use (default: DenseTrack)"
 
-echo "${TXT_BOLD}Status:${TXT_RESET} ${TXT_GREEN}initialized${TXT_RESET}"
+log_OK "Event \"${EVENT_NAME}\" initialized."
 echo "initialized" > "$STATUS_FILE"
-
 
