@@ -127,16 +127,27 @@ while read -r video; do
 	LOCKFILE="${VIDS_WORK_DIR}${video}/descriptor_extraction.lock"
 	VIDEO_STATUS_FILE="${VIDS_WORK_DIR}${video}/descriptor_extraction_status"
 	
+	# Quick check to avoid locking unnecessarily
 	if [[ `cat "${VIDEO_STATUS_FILE}" 2> /dev/null` == "done" && ${OVERWRITE_ALL} == NO ]]; then
 		log_OK "DenseTrack \"${video}\" already marked as done."
 		NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
 		continue
 	fi
 	
-	# START BY REGULAR MEANS
+	# START BY REGULAR MEANS, LOCKING
 	if ( set -o noclobber; echo "$EVENT_NAME" > "$LOCKFILE") 2> /dev/null ; then
-		# Lock acquired, launch job
+		# Lock acquired, re-check
+		if [[ `cat "${VIDEO_STATUS_FILE}" 2> /dev/null` == "done" && ${OVERWRITE_ALL} == NO ]]; then
+			log_OK "DenseTrack \"${video}\" already marked as done."
+			NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
+			rm -f "${LOCKFILE}"
+			continue
+		fi
+		
+		# Launch job
 		run_job_sequential
+		# {Lock released}
+		
 		if [[ $? == 0 ]]; then
 			NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
 		fi
