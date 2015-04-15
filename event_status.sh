@@ -7,7 +7,20 @@ USAGE_STRING="
 #
 # Reports status string and jobs currently in queue where applicable.
 "
+#
+# SWITCHING TO MED DIRECTORY
+#
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+cd "${DIR}"
 
+set -e
+set -u
 source processing/usr/scripts/bash_utils.sh
 
 ERROR_COLOR="${TXT_BOLD}${TXT_RED}ERROR${TXT_RESET}"
@@ -22,8 +35,8 @@ if [[ "$1" == "" ]]; then
 fi
 EVENT_NAME="$1"
 
-set -e
-set -u
+
+
 
 echo      "--------------------"
 #log_TITLE "${EVENT_NAME}"
