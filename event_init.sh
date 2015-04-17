@@ -3,7 +3,7 @@
 # Xavier Martin xavier.martin@inria.fr
 
 USAGE_STRING="
-# Usage: event_init.sh EVENT_NAME [ --positive_vids POSITIVE_LIST.TXT ] [ --background_vids BG_LIST.TXT ] [ --overwrite ] [ --ignore-missing ]
+# Usage: event_init.sh \"EVENT_NAME\" [ --positive_vids POSITIVE_LIST.TXT ] [ --background_vids BG_LIST.TXT ] [ --overwrite ] [ --ignore-missing ]
 #
 #	--positive_vids POSITIVE_LIST.TXT
 #		contains list of positive videos
@@ -19,10 +19,8 @@ USAGE_STRING="
 #
 #	--ignore-missing
 #		continues even if some videos do not exist
-#   
-#   EVENT_NAME
 #
-# Prepares the directory structure and creates jobs to be executed.
+# Prepares the directory structure, creates a job queue.
 # Does not overwrite existing data unless explicitly asked.
 "
 #

@@ -13,7 +13,7 @@ ERROR_COLOR="${TXT_BOLD}${TXT_RED}ERROR${TXT_RESET}"
 WARNING_COLOR="${TXT_RED}WARNING${TXT_RESET}"
 trap 'test_ERR "stage failed"; exit 1' ERR
 
-EVENT_NAME="biking UCF-101"
+EVENT_NAME="UCF-101/biking UCF-101"
 
 #test_INFO "Creating test event"
 #test_OK "Running test suite"
@@ -29,9 +29,13 @@ rm -rf "events/${EVENT_NAME}/workdir/"
 
 #test_INFO "Computing descriptors"
 
-./event_run_descriptor_extraction.sh "$EVENT_NAME" --force-start
+./event_run_descriptor_extraction.sh "$EVENT_NAME" --parallel 4
 
 #test_INFO "Check on progress.."
+
+./event_status.sh "$EVENT_NAME"
+
+./event_run_training.sh "${EVENT_NAME}"
 
 ./event_status.sh "$EVENT_NAME"
 

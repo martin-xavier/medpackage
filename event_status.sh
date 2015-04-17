@@ -3,7 +3,7 @@
 # Xavier Martin xavier.martin@inria.fr
 
 USAGE_STRING="
-# Usage: event_status.sh EVENT_NAME
+# Usage: event_status.sh \"EVENT_NAME\"
 #
 # Reports status string and jobs currently in queue where applicable.
 "
@@ -51,7 +51,7 @@ POSITIVE_FILE="$WORK_DIR/_positive.txt"
 BACKGROUND_FILE="$WORK_DIR/_background.txt"
 COMP_DESC_QUEUE_FILE="$WORK_DIR/compute_descriptors_queue"
 VIDS_WORK_DIR="processing/videos_workdir/"
-CLASSIFIERS_DIR="$WORK_DIR/classifiers"
+CLASSIFIERS_DIR="$EV_DIR/classifiers"
 
 # EVENT NAME AND STATUS
 #echo "${TXT_BOLD}Event: ${TXT_RESET}${EVENT_NAME}"
@@ -94,23 +94,22 @@ while read -r video; do
 	esac
 done < "$COMP_DESC_QUEUE_FILE"
 
+echo -e "${TXT_BOLD}DenseTrack${TXT_RESET}"
 if [[ $NB_DONE == $NB_TOT ]]; then
-	echo -e "\n${TXT_BOLD}extraction: ${TXT_BG_GREEN}${TXT_WHITE}DenseTrack${TXT_RESET}"
+	echo -e "${TXT_BOLD}${TXT_GREEN}${TXT_BG_GREEN}Descriptors:${TXT_RESET} waiting: $NB_WAITING; running: ${NB_RUNNING}; done: ${NB_DONE}."
 elif [[ $NB_RUNNING > 0 ]]; then
-	echo -e "\n${TXT_BOLD}extraction: ${TXT_BG_BLUE}${TXT_WHITE}DenseTrack${TXT_RESET} ${TXT_BOLD}(processing..)${TXT_RESET}"
+	echo -e "${TXT_BOLD}Descriptors:${TXT_RESET} waiting: $NB_WAITING; ${TXT_BOLD}${TXT_WHITE}${TXT_BG_BLUE}running: ${NB_RUNNING}${TXT_RESET}; done: ${NB_DONE}."
 else
-	echo -e "\n${TXT_BOLD}extraction: ${TXT_BG_BLUE}${TXT_WHITE}DenseTrack${TXT_RESET}"
+	echo -e "${TXT_BOLD}Descriptors:${TXT_RESET} waiting: $NB_WAITING; running: ${NB_RUNNING}; done: ${NB_DONE}."
 fi
 
-echo "$NB_WAITING waiting."
-echo "$NB_RUNNING running."
-echo "$NB_DONE processed."
-
-if [[ ! -e "$CLASSIFIERS_DIR" ]]; then
-	exit 0
+if [[ -e "$CLASSIFIERS_DIR" ]]; then
+	echo -e "${TXT_BOLD}${TXT_GREEN}${TXT_BG_GREEN}Classifier:${TXT_RESET} OK.${TXT_RESET}"
+else
+	echo -e "${TXT_BOLD}Classifier:${TXT_RESET} none.${TXT_RESET}"
 fi
-echo -e "\n${TXT_BOLD}Stage 2: Classifier training${TXT_RESET}"
-echo -e "Partial classifier available.\nTrained on 2015-03-26 with 56 positive and 35 background videos."
+
+#echo -e "Partial classifier available.\nTrained on 2015-03-26 with 56 positive and 35 background videos."
 
 #if [[ "`cat $EVENT_NAME
 
