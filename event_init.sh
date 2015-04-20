@@ -17,8 +17,8 @@ USAGE_STRING="
 #	--overwrite
 #		writes over existing event where applicable
 #
-#	--ignore-missing
-#		continues even if some videos do not exist
+#	--check-missing
+#		ensures all videos exist (slow over NFS)
 #
 # Prepares the directory structure, creates a job queue.
 # Does not overwrite existing data unless explicitly asked.
@@ -46,7 +46,7 @@ EVENT_NAME=""
 BACKGROUND_FILE=""
 POSITIVE_FILE=""
 OVERWRITE=NO
-IGNORE_MISSING=NO
+CHECK_MISSING=NO
 
 while [[ $# > 0 ]]
 	do
@@ -72,8 +72,8 @@ while [[ $# > 0 ]]
 		--overwrite)
 		OVERWRITE=YES
 		;;
-		--ignore-missing)
-		IGNORE_MISSING=YES
+		--check-missing)
+		CHECK_MISSING=YES
 		;;
 		*)
 		# Event name here
@@ -99,7 +99,7 @@ if [[ "$POSITIVE_FILE" == "" ]]; then POSITIVE_FILE="$EV_DIR/positive.txt"; fi
 if [[ "$BACKGROUND_FILE" == "" ]]; then BACKGROUND_FILE="$EV_DIR/background.txt"; fi
 COMP_DESC_QUEUE_FILE="$WORK_DIR/compute_descriptors_queue"
 
-log_INFO "${TXT_BOLD}Creating \"$EVENT_NAME\"${TXT_RESET} (overwrite=${OVERWRITE}, ignore-missing=${IGNORE_MISSING})"
+log_INFO "${TXT_BOLD}Creating \"$EVENT_NAME\"${TXT_RESET} (overwrite=${OVERWRITE}, check-missing=${CHECK_MISSING})"
 log_INFO "Positive videos: \"$POSITIVE_FILE\""
 log_INFO "Background videos: \"$BACKGROUND_FILE\""
 log_INFO ""
@@ -115,7 +115,6 @@ fi
 # CHECK BACKGROUND.TXT, POSITIVE.TXT
 # FILL VIDEO LIST
 
-VIDEOS=()
 
 #
 # 1) EXISTS
@@ -133,42 +132,54 @@ if [[ `cat "$POSITIVE_FILE" | wc -l` < 1 || `cat "$BACKGROUND_FILE" | wc -l` < 1
 fi
 
 # 3) VIDEOS EXIST
-NB_MISSING=0
-echo -n "" > missing_videos.txt
-echo -n "" > "$WORK_DIR/_background.txt"
-echo -n "" > "$WORK_DIR/_positive.txt"
 
-while read -r video; do
-	if [[ ! -e "videos/$video" ]]; then
-		echo "$video" >> missing_videos.txt
-		NB_MISSING=$(( $NB_MISSING + 1 ))
-	else
-		VIDEOS+=("$video")
-		echo "$video" >> "$WORK_DIR/_positive.txt"
+VIDEOS=()
+if [[ $CHECK_MISSING == YES ]]; then
+	NB_MISSING=0
+	echo -n "" > missing_videos.txt
+	echo -n "" > "$WORK_DIR/_background.txt"
+	echo -n "" > "$WORK_DIR/_positive.txt"
+
+	while read -r video; do
+		log_INFO "Checking ${video}"
+		if [[ ! -e "videos/$video" ]]; then
+			echo "$video" >> missing_videos.txt
+			NB_MISSING=$(( $NB_MISSING + 1 ))
+		else
+			VIDEOS+=("$video")
+			echo "$video" >> "$WORK_DIR/_positive.txt"
+		fi
+	done < "$POSITIVE_FILE"
+	while read -r video; do
+		log_INFO "Checking ${video}"
+		if [[ ! -e "videos/$video" ]]; then
+			echo "$video" >> missing_videos.txt
+			NB_MISSING=$(( $NB_MISSING + 1 ))
+		else
+			VIDEOS+=("$video")
+			echo "$video" >> "$WORK_DIR/_background.txt"
+		fi
+	done < "$BACKGROUND_FILE"
+	if [[ $NB_MISSING > 0 ]]; then
+		log_WARN "$NB_MISSING missing videos, see \"missing_videos.txt\" for the complete list."
 	fi
-done < "$POSITIVE_FILE"
-while read -r video; do
-	if [[ ! -e "videos/$video" ]]; then
-		echo "$video" >> missing_videos.txt
-		NB_MISSING=$(( $NB_MISSING + 1 ))
-	else
-		VIDEOS+=("$video")
-		echo "$video" >> "$WORK_DIR/_background.txt"
-	fi
-done < "$BACKGROUND_FILE"
-if [[ $NB_MISSING > 0 ]]; then
-	log_WARN "$NB_MISSING missing videos, see \"missing_videos.txt\" for the complete list."
-	if [[ $IGNORE_MISSING == NO ]]; then
-		log_INFO "Use option --ignore-missing if you wish to continue anyway."
-		exit 1
-	fi
+	
+else
+	while read -r video; do
+		VIDEOS+=("${video}");
+	done < "${POSITIVE_FILE}"
+	while read -r video; do
+		VIDEOS+=("${video}");
+	done < "${BACKGROUND_FILE}"
 fi
+
+log_INFO "Found ${#VIDEOS[@]} videos."
+log_INFO ""
 
 #
 # APPEND JOBS
 #
-log_INFO "Found ${#VIDEOS[@]} videos."
-log_INFO ""
+
 
 if [[ -e "$COMP_DESC_QUEUE_FILE" ]]; then
 	log_WARN "processing queue already exists, overwriting content."
