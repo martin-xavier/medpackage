@@ -26,8 +26,8 @@ while [[ $# > 0 ]]
 		--scenecutfile)
 		SCENECUTFILE="$2"
 		if [ ! -e "${SCENECUTFILE}" ]; then
-			echo "$USAGE_STRING"
-			log_ERR "Scenecut file does not exist."
+			log_ERR "Scenecut file \"${SCENECUTFILE}\" does not exist."
+			exit 1
 		fi
 		shift
 		;;
@@ -39,21 +39,6 @@ while [[ $# > 0 ]]
 	shift
 done
 
-
-
-VIDNAME="$1"
-
-if [ "$1" == "" ]; then
-	echo "Parameters are missing."
-	echo "Usage: denseTrack_extraction_fullvideo.sh VIDEO"
-	echo "()"
-	exit 1
-fi
-
-
-
-#log_INFO "Executing denseTrack_extraction_fullvideo.sh"
-
 # Check that video exists
 if [ ! -e "${MED_BASEDIR}/../videos/${VIDNAME}" ]; then
 	log_ERR "Video \"${MED_BASEDIR}/../videos/${VIDNAME}\" does not exist"
@@ -61,9 +46,9 @@ if [ ! -e "${MED_BASEDIR}/../videos/${VIDNAME}" ]; then
 fi
 
 if [ "${SCENECUTFILE}" == "" ]; then
-	python "${MED_BASEDIR}/compute_descriptors/denseTrack/densetrack_to_fisher_shot_errorprotect.py" --video "${VIDNAME}" --split train -k 256 --redo --slice 1 --save slice
+	python "${MED_BASEDIR}/compute_descriptors/denseTrack/densetrack_to_fisher_shot_errorprotect.py" --video "${VIDNAME}" --split train -k 256 --redo --slice 1 --save slice --featurepath "${MED_BASEDIR}videos_workdir/${VIDNAME}"
 else
-	python "${MED_BASEDIR}/compute_descriptors/denseTrack/densetrack_to_fisher_shot_errorprotect.py" --video "${VIDNAME}" --split train -k 256 --redo --slice 1 --save slice --scenecut "${SCENECUTFILE}"
+	python "${MED_BASEDIR}/compute_descriptors/denseTrack/densetrack_to_fisher_shot_errorprotect.py" --video "${VIDNAME}" --split train -k 256 --redo --slice 1 --save slice --scenecut "${SCENECUTFILE}" --featurepath "${MED_BASEDIR}videos_workdir/${VIDNAME}/shots"
 fi
 
 # CHECK RESULTS

@@ -300,6 +300,7 @@ def main():
     parser.add_argument('--save', default=['video'], nargs='+', choices=('video', 'slice'), help="what to store: video descriptor or slice descriptors.")
     parser.add_argument('--slice', default=None, type=int, help="slice size (in number of frames).")
     parser.add_argument('--scenecut', default=None, help="Full path to scenecut file, contains shot boundaries.")
+    parser.add_argument('--featurepath', default=None, help="Full path to where features are saved.")
     parser.add_argument('-v', '--verbose', action='count', help="verbosity level.")
 
     args = parser.parse_args()
@@ -326,12 +327,22 @@ def main():
         '%(slice_or_video)s_descriptors' + ('_h3spm' if args.h3spm else ''),
         '%(video_name)s.fvecs')
     """
+    if args.featurepath == None:
+        print "Feature path not specified"
+        sys.exit(1)
+        
+    feature_path = os.path.join(
+        args.featurepath,
+        '%(descriptor)s_%(model)s_k_%(K)d_descriptor.fvecs'
+    )
+    """
     feature_path = os.path.join(
         'processing',
         'videos_workdir',
         '%(video_name)s',
         '%(descriptor)s_%(model)s_k_%(K)d_descriptor.fvecs'
     )
+    """
     print "Video path:", video_path
     print "Feature path:", feature_path    
     
