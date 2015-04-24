@@ -143,11 +143,19 @@ log_TITLE "Descriptor extraction"
 
 if [ $NB_INSTANCES -gt 1 ]; then
 	# This instance acts as the master.
+	( for (( i = 0; i < ${#VIDEOS[@]}; i++ )); do
+		echo ${VIDEOS[${i}]}
+	done ) > processing/tmp_videolist
+	
+	CHANNELS_STR=""
+	for i in ${CHANNELS[@]}; do 
+		CHANNELS_STR="${CHANNELS_STR} -c ${i}"
+	done
 	
 	PIDS=()
 	# Spawn instances
 	for (( i = 0; i < ${NB_INSTANCES}; i++ )); do
-		xterm -e "./video_run_descriptor_extraction.sh \"${EVENT_NAME}\"" &
+		xterm -e "./video_run_descriptor_extraction.sh ${CHANNELS_STR} --video-list processing/tmp_videolist" &
 		PIDS+=($!)
 		log_OK "Spawned PID $!"
 	done
@@ -169,6 +177,8 @@ if [ $NB_INSTANCES -gt 1 ]; then
 	#else
 	#	log_ERR "Missing $RETVAL descriptors."
 	#fi
+	
+	rm -f processing/tmp_videolist
 	exit 0
 fi
 
