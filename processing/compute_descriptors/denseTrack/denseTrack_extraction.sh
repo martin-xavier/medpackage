@@ -55,7 +55,10 @@ fi
 set -e
 for i in `cat "${MED_BASEDIR}compute_descriptors/denseTrack/denseTrack_descriptors.list"`;
 do
-	if [[ ! -e "${MED_BASEDIR}/videos_workdir/${VIDNAME}/${i}.fvecs" ]]; then
+	if [[ "${SCENECUTFILE}" == "" && ! -e "${MED_BASEDIR}/videos_workdir/${VIDNAME}/${i}.fvecs" ]]; then
+		log_ERR "Descriptors not generated for \"${VIDNAME}\"."
+		exit 1
+	elif [[ ! -e "${MED_BASEDIR}/videos_workdir/${VIDNAME}/shots/${i}.fvecs" ]]; then
 		log_ERR "Descriptors not generated for \"${VIDNAME}\"."
 		exit 1
 	fi
