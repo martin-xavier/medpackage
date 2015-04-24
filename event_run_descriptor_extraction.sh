@@ -96,6 +96,7 @@ WORK_DIR="$EV_DIR/workdir"
 STATUS_FILE="$WORK_DIR/status"
 COMP_DESC_QUEUE_FILE="$WORK_DIR/compute_descriptors_queue"
 VIDS_WORK_DIR="processing/videos_workdir/"
+CHANNELS_FILE="${WORK_DIR}/channels.list"
 
 
 echo      "--------------------"
@@ -143,9 +144,9 @@ fi
 ########################
 
 function cleanup {
-	echo "Emergency exit on ${video}, cleaning up lock and status."
+	echo "Emergency exit on ${CHANNEL} ${video}, cleaning up lock and status."
 	rm -f "${LOCKFILE}"
-	rm -f "${VIDEO_STATUS_FILE}"
+	rm -f "${VID_CHANNEL_STATUS_FILE}"
 }
 
 function run_job_sequential {
@@ -153,22 +154,22 @@ function run_job_sequential {
 	# In case job is interrupted
 	trap cleanup TERM HUP KILL INT
 	
-	echo "running" > "$VIDEO_STATUS_FILE"
+	echo "running" > "$VID_CHANNEL_STATUS_FILE"
 	
 	log_INFO "Launching job for \"$video\"."
 	
 	(
 	source processing/config_MED.sh
-	densetrack_and_fisher_fullvid.sh "${video}"
+	./processing/compute_descriptors/${CHANNEL}/${CHANNEL}_extraction_fullvideo.sh "${video}"
 	exit $?
 	)
 	
 	if [[ $? == 0 ]]; then
 	## "done" message must be written when you've checked the results are those expected
-		echo "done" > "$VIDEO_STATUS_FILE"
+		echo "done" > "$VID_CHANNEL_STATUS_FILE"
 		log_OK "Job successful for \"$video\"."
 	else
-		rm -f "$VIDEO_STATUS_FILE"
+		rm -f "$VID_CHANNEL_STATUS_FILE"
 		log_ERROR "Job failed for \"${video}\"."
 	fi
 	
@@ -183,77 +184,81 @@ function run_job_sequential {
 #### RUN JOBS
 
 log_INFO "${TXT_BOLD}Checking all videos sequentially${TXT_RESET}"
-log_TODO "Implement remote job handler, oar handler, etc."
+log_TODO "Implement remote job handler, OAR handler, etc."
 
 
 
-# DENSETRACK
-NB_DESCRIPTORS_MISSING=`cat "${COMP_DESC_QUEUE_FILE}" | wc -l`
+# FOR EVERY CHANNEL
+while read -r CHANNEL; do
+	log_INFO ""
+	log_IMPORTANT "Computing descriptors for ${CHANNEL}."
 
-while read -r video; do
-	mkdir -p "${VIDS_WORK_DIR}${video}"
-	LOCKFILE="${VIDS_WORK_DIR}${video}/descriptor_extraction.lock"
-	VIDEO_STATUS_FILE="${VIDS_WORK_DIR}${video}/descriptor_extraction_status"
-	VID_STATUS=`cat "${VIDEO_STATUS_FILE}" 2> /dev/null`
+	NB_DESCRIPTORS_MISSING=`cat "${COMP_DESC_QUEUE_FILE}" | wc -l`
 	
-	if [[ ${CLEAN_STATE_RUNNING} == "YES" ]]; then
-		if [[ ${VID_STATUS} == "running" ]]; then
-			rm -f "${LOCKFILE}"
-			rm -f "${VIDEO_STATUS_FILE}"
-			log_OK "Cleared 'running' state for \"${video}\""
-		fi
-		continue
-	fi
+	while read -r video; do
+		mkdir -p "${VIDS_WORK_DIR}${video}"
+		VID_CHANNEL_STATUS_FILE="${VIDS_WORK_DIR}${video}/${CHANNEL}_extraction_status"
+		LOCKFILE="${VID_CHANNEL_STATUS_FILE}.lock"
+		VID_CHANNEL_STATUS=`cat "${VID_CHANNEL_STATUS_FILE}" 2> /dev/null`
 	
-	# Quick checks to avoid locking unnecessarily
-	
-	
-	if [[ "${VID_STATUS}" == "done" && ${OVERWRITE_ALL} == NO ]]; then
-		log_OK "DenseTrack \"${video}\" already marked as done."
-		NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
-		continue
-	elif [[ "${VID_STATUS}" == "running" && ${FORCE_START} == NO ]]; then
-		log_WARN "DenseTrack job already registered for \"${video}\". Owner: \"`cat "$LOCKFILE"`\". See option \"--force-start\"."
-		NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
-		continue
-	fi
-	
-	# START BY REGULAR MEANS, LOCKING
-	if ( set -o noclobber; echo "$EVENT_NAME" > "$LOCKFILE") 2> /dev/null ; then
-		# Lock acquired, re-check
-		# The status can't be marked as "running" if lock was acquired
-		VID_STATUS=`cat "${VIDEO_STATUS_FILE}" 2> /dev/null`
-		if [[ "${VID_STATUS}" == "done" && ${OVERWRITE_ALL} == NO ]]; then
-			log_OK "DenseTrack \"${video}\" already marked as done."
-			NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
-			rm -f "${LOCKFILE}"
+		if [[ ${CLEAN_STATE_RUNNING} == "YES" ]]; then
+			if [[ ${VID_CHANNEL_STATUS} == "running" ]]; then
+				rm -f "${LOCKFILE}"
+				rm -f "${VID_CHANNEL_STATUS_FILE}"
+				log_OK "Cleared 'running' state for \"${video}\""
+			fi
 			continue
 		fi
-		
-		# Launch job
-		run_job_sequential
-		# {Lock released}
-		
-		if [[ $? == 0 ]]; then
+	
+		# Quick checks to avoid locking unnecessarily
+	
+		if [[ "${VID_CHANNEL_STATUS}" == "done" && ${OVERWRITE_ALL} == NO ]]; then
+			log_OK "${CHANNEL} \"${video}\" already marked as done."
 			NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
+			continue
+		elif [[ "${VID_CHANNEL_STATUS}" == "running" && ${FORCE_START} == NO ]]; then
+			log_WARN "${CHANNEL} job already registered for \"${video}\". Owner: \"`cat "$LOCKFILE"`\". See option \"--force-start\"."
+			NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
+			continue
 		fi
-	else
-		if [[ ${FORCE_START} == NO ]]; then
-			log_WARN "DenseTrack job already registered for \"${video}\". Owner: \"`cat "$LOCKFILE"`\". See option \"--force-start\"."
-			NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
-		else
-			# Force start
-			log_WARN "Force start on DenseTrack \"${video}\". Original owner: \"`cat "$LOCKFILE"`\""
+	
+		# START BY REGULAR MEANS, LOCKING
+		if ( set -o noclobber; echo "$EVENT_NAME" > "$LOCKFILE") 2> /dev/null ; then
+			# Lock acquired, re-check
+			# The status can't be marked as "running" if lock was acquired
+			VID_CHANNEL_STATUS=`cat "${VID_CHANNEL_STATUS_FILE}" 2> /dev/null`
+			if [[ "${VID_CHANNEL_STATUS}" == "done" && ${OVERWRITE_ALL} == NO ]]; then
+				log_OK "${CHANNEL} \"${video}\" already marked as done."
+				NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
+				rm -f "${LOCKFILE}"
+				continue
+			fi
+		
+			# Launch job
 			run_job_sequential
+			# {Lock released}
+		
 			if [[ $? == 0 ]]; then
 				NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
 			fi
+		else
+			if [[ ${FORCE_START} == NO ]]; then
+				log_WARN "${CHANNEL} job already registered for \"${video}\". Owner: \"`cat "$LOCKFILE"`\". See option \"--force-start\"."
+				NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
+			else
+				# Force start
+				log_WARN "Force start on ${CHANNEL} \"${video}\". Original owner: \"`cat "$LOCKFILE"`\""
+				run_job_sequential
+				if [[ $? == 0 ]]; then
+					NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
+				fi
+			fi
 		fi
-	fi
-done < "${COMP_DESC_QUEUE_FILE}"
-set -e
-
-log_INFO "Missing ${NB_DESCRIPTORS_MISSING} descriptors."
+	done < "${COMP_DESC_QUEUE_FILE}"
+	log_INFO "Missing ${NB_DESCRIPTORS_MISSING} descriptors."
+	
+done < "${CHANNELS_FILE}"
+	
 exit ${NB_DESCRIPTORS_MISSING}
 
 

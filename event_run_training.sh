@@ -60,11 +60,18 @@ WORK_DIR="$EV_DIR/workdir"
 STATUS_FILE="$WORK_DIR/status"
 COMP_DESC_QUEUE_FILE="$WORK_DIR/compute_descriptors_queue"
 VIDS_WORK_DIR="processing/videos_workdir/"
-
+CHANNELS_FILE="${WORK_DIR}/channels.list"
 
 echo      "--------------------"
 log_TITLE "Classifier training"
 
+TRAINING_DESCS=""
+while read -r CHANNEL; do
+	while read -r DESC; do 
+		TRAINING_DESCS="${TRAINING_DESCS} ${DESC}"
+	done < "processing/compute_descriptors/${CHANNEL}/${CHANNEL}_descriptors.list"
+done < "${CHANNELS_FILE}"
+
 source processing/config_MED.sh
-python "processing/compute_classifiers/med_early_fusion.py" --train --event-class "${EVENT_NAME}" denseTrack_hog denseTrack_hof denseTrack_mbh
+python "processing/compute_classifiers/med_early_fusion.py" --train --event-class "${EVENT_NAME}" ${TRAINING_DESCS}
 

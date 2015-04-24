@@ -18,5 +18,5 @@ export LD_LIBRARY_PATH=/home/lear/pweinzae/localscratch/libraries/opencv-2.4.9/r
 
 export PATH=${MED_BASEDIR}usr/bin:${MED_BASEDIR}usr/yael/progs:${MED_BASEDIR}usr/scripts:${PATH}
 export LD_LIBRARY_PATH=${MED_BASEDIR}usr/yael/yael:${LD_LIBRARY_PATH}
-export PYTHONPATH=${MED_BASEDIR}usr/yael:${MED_BASEDIR}compute_index/event_recognition_axes
+export PYTHONPATH=${MED_BASEDIR}usr/yael:${MED_BASEDIR}compute_index/event_recognition_axes:${MED_BASEDIR}usr/py
 

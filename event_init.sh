@@ -3,16 +3,20 @@
 # Xavier Martin xavier.martin@inria.fr
 
 USAGE_STRING="
-# Usage: event_init.sh \"EVENT_NAME\" [ --positive_vids POSITIVE_LIST.TXT ] [ --background_vids BG_LIST.TXT ] [ --overwrite ] [ --ignore-missing ]
+# Usage: event_init.sh \"EVENT_NAME\" [ --positive-vids POSITIVE_LIST.TXT ] [ --background-vids BG_LIST.TXT ] [ --overwrite ] [ --ignore-missing ]
 #
-#	--positive_vids POSITIVE_LIST.TXT
+#	--positive-vids POSITIVE_LIST.TXT
 #		contains list of positive videos
 #		default value: \"events/EVENT_NAME/positive.txt\"
-#	--background_vids BG_LIST.TXT
+#	--background-vids BG_LIST.TXT
 #		list of neutral videos
 #		default value: \"events/EVENT_NAME/background.txt\".
 #
 #		Info: the positive and background videos are considered as a single entity (no shot detection).
+#
+#	--channels CHANNEL_LIST.TXT
+#		text file containing the descriptor channels requested
+#		default: denseTrack
 #
 #	--overwrite
 #		writes over existing event where applicable
@@ -45,6 +49,7 @@ source processing/usr/scripts/bash_utils.sh
 EVENT_NAME=""
 BACKGROUND_FILE=""
 POSITIVE_FILE=""
+CHANNELS_FILE=""
 OVERWRITE=NO
 CHECK_MISSING=NO
 
@@ -61,12 +66,16 @@ while [[ $# > 0 ]]
 		echo "$USAGE_STRING"
 		exit 1
 		;;
-		--background_vids)
+		--background-vids)
 		BACKGROUND_FILE="$2"
 		shift
 		;;
-		--positive_vids)
+		--positive-vids)
 		POSITIVE_FILE="$2"
+		shift
+		;;
+		--channels)
+		CHANNELS_FILE="$2"
 		shift
 		;;
 		--overwrite)
@@ -134,12 +143,14 @@ fi
 # 3) VIDEOS EXIST
 
 VIDEOS=()
+
+echo -n "" > "$WORK_DIR/_background.txt"
+echo -n "" > "$WORK_DIR/_positive.txt"
+
 if [[ $CHECK_MISSING == YES ]]; then
 	NB_MISSING=0
 	echo -n "" > missing_videos.txt
-	echo -n "" > "$WORK_DIR/_background.txt"
-	echo -n "" > "$WORK_DIR/_positive.txt"
-
+	
 	while read -r video; do
 		log_INFO "Checking ${video}"
 		if [[ ! -e "videos/$video" ]]; then
@@ -168,21 +179,49 @@ else
 	while read -r video; do
 		VIDEOS+=("${video}");
 	done < "${POSITIVE_FILE}"
+	cp "${POSITIVE_FILE}" "$WORK_DIR/_positive.txt"
+	
 	while read -r video; do
 		VIDEOS+=("${video}");
 	done < "${BACKGROUND_FILE}"
+	cp "${BACKGROUND_FILE}" "$WORK_DIR/_background.txt"
 fi
 
 log_INFO "Found ${#VIDEOS[@]} videos."
 log_INFO ""
 
 #
+# CHECK CHANNELS REQUESTED
+#
+echo -n "" > "${WORK_DIR}/channels.list"
+if [[ "${CHANNELS_FILE}" != "" ]]; then
+	if [ ! -e "${CHANNELS_FILE}" ]; then
+		log_ERR "Could not find channels file \"${CHANNELS_FILE}\""
+		exit 1
+	else
+		# Check if all channels exist
+		while read -r channel; do
+			if [ ! -e "./processing/compute_descriptors/${channel}/${channel}_descriptors.list" ]; then
+				log_ERR "Could not find channel \"${channel}\"."
+				exit 1
+			else
+				log_INFO "Using channel ${channel}."
+				echo "${channel}" >> "${WORK_DIR}/channels.list"
+			fi
+		done < "${CHANNELS_FILE}"
+	fi
+else
+	# Default = denseTrack channel
+	echo "denseTrack" > "${WORK_DIR}/channels.list"
+	log_INFO "Using channel denseTrack (default)."
+fi
+
+#
 # APPEND JOBS
 #
 
-
 if [[ -e "$COMP_DESC_QUEUE_FILE" ]]; then
-	log_WARN "processing queue already exists, overwriting content."
+	log_WARN "Processing queue already exists, overwriting content."
 fi
 (
 	for (( i=0; i < ${#VIDEOS[@]}; i++ )); do
@@ -191,8 +230,6 @@ fi
 ) > "$COMP_DESC_QUEUE_FILE"
 log_INFO "Registered videos for processing in \"$COMP_DESC_QUEUE_FILE\"."
 log_INFO ""
-
-log_TODO "Ask user for channels to use (default: DenseTrack)"
 
 log_OK "Event \"${EVENT_NAME}\" initialized."
 echo "initialized" > "$STATUS_FILE"

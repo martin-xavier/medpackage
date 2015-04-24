@@ -74,40 +74,37 @@ NB_TOT=$(( $NB_POS + $NB_BG ))
 
 # DESCRIPTORS PROCESSING
 # -- running, done and waiting
-NB_RUNNING=0
-NB_DONE=0
-NB_WAITING=0
+while read -r CHANNEL; do
+	NB_RUNNING=0
+	NB_DONE=0
+	NB_WAITING=0
 
-set +e
-while read -r video; do
-	VID_STATUS=`cat "${VIDS_WORK_DIR}${video}/descriptor_extraction_status" 2> /dev/null`
-	case "$VID_STATUS" in
-		"running")
-		NB_RUNNING=$(( $NB_RUNNING + 1 ))
-		;;
-		"done")
-		NB_DONE=$(( $NB_DONE + 1 ))
-		;;
-		*)
-		NB_WAITING=$(( $NB_WAITING + 1 ))
-		;;
-	esac
-done < "$COMP_DESC_QUEUE_FILE"
+	set +e
+	while read -r video; do
+		VID_STATUS=`cat "${VIDS_WORK_DIR}${video}/${CHANNEL}_extraction_status" 2> /dev/null`
+		case "$VID_STATUS" in
+			"running")
+			NB_RUNNING=$(( $NB_RUNNING + 1 ))
+			;;
+			"done")
+			NB_DONE=$(( $NB_DONE + 1 ))
+			;;
+			*)
+			NB_WAITING=$(( $NB_WAITING + 1 ))
+			;;
+		esac
+	done < "$COMP_DESC_QUEUE_FILE"
 
-echo -e "${TXT_BOLD}DenseTrack${TXT_RESET}"
-if [[ $NB_DONE == $NB_TOT ]]; then
-	echo -e "${TXT_BOLD}${TXT_GREEN}${TXT_BG_GREEN}Descriptors:${TXT_RESET} waiting: $NB_WAITING; running: ${NB_RUNNING}; done: ${NB_DONE}."
-elif [[ $NB_RUNNING > 0 ]]; then
-	echo -e "${TXT_BOLD}Descriptors:${TXT_RESET} waiting: $NB_WAITING; ${TXT_BOLD}${TXT_WHITE}${TXT_BG_BLUE}running: ${NB_RUNNING}${TXT_RESET}; done: ${NB_DONE}."
-else
-	echo -e "${TXT_BOLD}Descriptors:${TXT_RESET} waiting: $NB_WAITING; running: ${NB_RUNNING}; done: ${NB_DONE}."
-fi
-
-if [[ -e "$CLASSIFIERS_DIR" ]]; then
-	echo -e "${TXT_BOLD}${TXT_GREEN}${TXT_BG_GREEN}Classifier:${TXT_RESET} OK.${TXT_RESET}"
-else
-	echo -e "${TXT_BOLD}Classifier:${TXT_RESET} none.${TXT_RESET}"
-fi
+	echo ""
+	echo -e "${TXT_BOLD}${CHANNEL}${TXT_RESET}"
+	if [[ $NB_DONE == $NB_TOT ]]; then
+		echo -e "${TXT_BOLD}${TXT_GREEN}${TXT_BG_GREEN}Descriptors:${TXT_RESET} waiting: $NB_WAITING; running: ${NB_RUNNING}; done: ${NB_DONE}."
+	elif [[ $NB_RUNNING > 0 ]]; then
+		echo -e "${TXT_BOLD}Descriptors:${TXT_RESET} waiting: $NB_WAITING; ${TXT_BOLD}${TXT_WHITE}${TXT_BG_BLUE}running: ${NB_RUNNING}${TXT_RESET}; done: ${NB_DONE}."
+	else
+		echo -e "${TXT_BOLD}Descriptors:${TXT_RESET} waiting: $NB_WAITING; running: ${NB_RUNNING}; done: ${NB_DONE}."
+	fi
+done < "${WORK_DIR}/channels.list"
 
 #echo -e "Partial classifier available.\nTrained on 2015-03-26 with 56 positive and 35 background videos."
 
