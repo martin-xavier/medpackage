@@ -47,6 +47,7 @@ cd "${DIR}"
 
 set -u
 source processing/usr/scripts/bash_utils.sh
+source processing/config_MED.sh
 
 ##
 ## PARSE ARGUMENTS
@@ -60,6 +61,9 @@ NB_INSTANCES=1
 SHOT_SEPARATION=NO
 VIDEOS=()
 CHANNELS=()
+
+# hidden option
+EVENT_NAME=""
 
 while [[ $# > 0 ]]
 	do
@@ -112,6 +116,11 @@ while [[ $# > 0 ]]
 		--overwrite-all)
 		OVERWRITE_ALL=YES
 		;;
+		--event-name)
+		# hidden option
+		EVENT_NAME="$2"
+		shift
+		;;
 		*)
 		# Event name here
 		EVENT_NAME="$key"
@@ -121,13 +130,14 @@ while [[ $# > 0 ]]
 done
 
 # NEED AT LEAST ONE CHANNEL
-if [[ ${#CHANNELS[@]} -eq 0 ]]; then
-	echo "$USAGE_STRING"
-	log_ERR "Need at least one channel, see option -c|--channel."
-	exit 1
-elif [[ ${#VIDEOS[@]} -eq 0 ]]; then
+
+if [[ ${#VIDEOS[@]} -eq 0 ]]; then
 	echo "$USAGE_STRING"
 	log_ERR "Need at least one video, see option --video-list."
+	exit 1
+elif [[ ${#CHANNELS[@]} -eq 0 ]]; then
+	echo "$USAGE_STRING"
+	log_ERR "Need at least one channel, see option -c|--channel."
 	exit 1
 fi
 
@@ -140,6 +150,18 @@ log_TITLE "Descriptor extraction"
 ##########
 # PARALLEL 
 ##########
+
+function killChildProcesses {
+	echo "Signal received - killing spawned processes."
+	for i in ${PIDS[@]}; do
+		#CPIDS=$(pgrep -P ${i})
+		#echo "Killing $CPIDS"
+		#kill -9 ${i} ${CPIDS};
+		#killtree ${i} 9
+		kill -9 "${i}"
+	done
+	exit 1
+}
 
 if [ $NB_INSTANCES -gt 1 ]; then
 	# This instance acts as the master.
@@ -162,7 +184,7 @@ if [ $NB_INSTANCES -gt 1 ]; then
 	
 	RETVAL=0
 	# Wait for instances to finish
-	trap 'echo Signal received - killing spawned processes.; kill -9 ${PIDS[@]}; exit 1' TERM HUP KILL INT
+	trap killChildProcesses TERM HUP KILL INT
 	for pid in ${PIDS[@]}; do
 		log_INFO "Waiting for $pid.."
 		wait $pid
@@ -191,6 +213,7 @@ function cleanup {
 	echo "Emergency exit on ${CHANNEL} ${video}, cleaning up lock and status."
 	rm -f "${LOCKFILE}"
 	rm -f "${VID_CHANNEL_STATUS_FILE}"
+	exit 1
 }
 
 function run_job_sequential {
@@ -201,15 +224,11 @@ function run_job_sequential {
 	
 	log_INFO "Launching job for \"$video\"."
 	
-	(
-	source processing/config_MED.sh
 	if [ "${SHOT_SEPARATION}" == "NO" ]; then
 		./processing/compute_descriptors/${CHANNEL}/${CHANNEL}_extraction.sh "${video}"
 	else
 		./processing/compute_descriptors/${CHANNEL}/${CHANNEL}_extraction.sh "${video}" --scenecutfile "${MED_BASEDIR}../shots/${video}.scenecut"
 	fi
-	exit $?
-	)
 	
 	if [[ $? == 0 ]]; then
 	## "done" message must be written when you've checked the results are those expected
@@ -232,7 +251,10 @@ function run_job_sequential {
 log_INFO "${TXT_BOLD}Checking all videos sequentially${TXT_RESET}"
 log_TODO "Implement remote job handler, OAR handler, etc."
 
-
+LOCK_STRING="none"
+if [ ! "${EVENT_NAME}" == "" ]; then
+	LOCK_STRING="${EVENT_NAME}"
+fi
 
 # FOR EVERY CHANNEL
 for CHANNEL in ${CHANNELS[@]}; do
@@ -276,7 +298,7 @@ for CHANNEL in ${CHANNELS[@]}; do
 		fi
 	
 		# START BY REGULAR MEANS, LOCKING
-		if ( set -o noclobber; echo "none" > "$LOCKFILE") 2> /dev/null ; then
+		if ( set -o noclobber; echo "${LOCK_STRING}" > "$LOCKFILE") 2> /dev/null ; then
 			# Lock acquired, re-check
 			# The status can't be marked as "running" if lock was acquired
 			VID_CHANNEL_STATUS=`cat "${VID_CHANNEL_STATUS_FILE}" 2> /dev/null`

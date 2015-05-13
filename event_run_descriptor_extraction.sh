@@ -99,167 +99,27 @@ VIDS_WORK_DIR="processing/videos_workdir/"
 CHANNELS_FILE="${WORK_DIR}/channels.list"
 
 
-echo      "--------------------"
-log_TITLE "Descriptor extraction"
+echo      "-----------------------------------"
+log_TITLE "Training: run descriptor extraction"
 log_INFO "Event ${EVENT_NAME}"
 
-##########
-# PARALLEL 
-##########
-
-if [ $NB_INSTANCES -gt 1 ]; then
-	# This instance acts as the master.
-	
-	PIDS=()
-	# Spawn instances
-	for (( i = 0; i < ${NB_INSTANCES}; i++ )); do
-		xterm -e "./event_run_descriptor_extraction.sh \"${EVENT_NAME}\"" &
-		PIDS+=($!)
-		log_OK "Spawned PID $!"
-	done
-	
-	RETVAL=0
-	# Wait for instances to finish
-	trap 'echo Signal received - killing spawned processes.; kill -9 ${PIDS[@]}; exit 1' TERM HUP KILL INT
-	for pid in ${PIDS[@]}; do
-		log_INFO "Waiting for $pid.."
-		wait $pid
-		#RETVAL=$(( $RETVAL + $? ))
-	done
-	
-	trap - TERM HUP KILL INT
-	
-	# Return value == add all instances' return values
-	#if [ $RETVAL -eq 0 ]; then
-	#	log_OK "Missing $RETVAL descriptors."
-	#else
-	#	log_ERR "Missing $RETVAL descriptors."
-	#fi
-	exit 0
-fi
-
-
-########################
-# Function declaration #
-########################
-
-function cleanup {
-	echo "Emergency exit on ${CHANNEL} ${video}, cleaning up lock and status."
-	rm -f "${LOCKFILE}"
-	rm -f "${VID_CHANNEL_STATUS_FILE}"
-}
-
-function run_job_sequential {
-	set -e
-	# In case job is interrupted
-	trap cleanup TERM HUP KILL INT
-	
-	echo "running" > "$VID_CHANNEL_STATUS_FILE"
-	
-	log_INFO "Launching job for \"$video\"."
-	
-	(
-	source processing/config_MED.sh
-	./processing/compute_descriptors/${CHANNEL}/${CHANNEL}_extraction_fullvideo.sh "${video}"
-	exit $?
-	)
-	
-	if [[ $? == 0 ]]; then
-	## "done" message must be written when you've checked the results are those expected
-		echo "done" > "$VID_CHANNEL_STATUS_FILE"
-		log_OK "Job successful for \"$video\"."
-	else
-		rm -f "$VID_CHANNEL_STATUS_FILE"
-		log_ERROR "Job failed for \"${video}\"."
-	fi
-	
-	rm -f "${LOCKFILE}"
-	
-	trap - INT HUP TERM HUP
-	
-	set +e
-	return 0
-}
-
-#### RUN JOBS
-
-log_INFO "${TXT_BOLD}Checking all videos sequentially${TXT_RESET}"
-log_TODO "Implement remote job handler, OAR handler, etc."
-
-
-
-# FOR EVERY CHANNEL
-while read -r CHANNEL; do
-	log_INFO ""
-	log_IMPORTANT "Computing descriptors for ${CHANNEL}."
-
-	NB_DESCRIPTORS_MISSING=`cat "${COMP_DESC_QUEUE_FILE}" | wc -l`
-	
-	while read -r video; do
-		mkdir -p "${VIDS_WORK_DIR}${video}"
-		VID_CHANNEL_STATUS_FILE="${VIDS_WORK_DIR}${video}/${CHANNEL}_extraction_status"
-		LOCKFILE="${VID_CHANNEL_STATUS_FILE}.lock"
-		VID_CHANNEL_STATUS=`cat "${VID_CHANNEL_STATUS_FILE}" 2> /dev/null`
-	
-		if [[ ${CLEAN_STATE_RUNNING} == "YES" ]]; then
-			if [[ ${VID_CHANNEL_STATUS} == "running" ]]; then
-				rm -f "${LOCKFILE}"
-				rm -f "${VID_CHANNEL_STATUS_FILE}"
-				log_OK "Cleared 'running' state for \"${video}\""
-			fi
-			continue
-		fi
-	
-		# Quick checks to avoid locking unnecessarily
-	
-		if [[ "${VID_CHANNEL_STATUS}" == "done" && ${OVERWRITE_ALL} == NO ]]; then
-			log_OK "${CHANNEL} \"${video}\" already marked as done."
-			NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
-			continue
-		elif [[ "${VID_CHANNEL_STATUS}" == "running" && ${FORCE_START} == NO ]]; then
-			log_WARN "${CHANNEL} job already registered for \"${video}\". Owner: \"`cat "$LOCKFILE"`\". See option \"--force-start\"."
-			NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
-			continue
-		fi
-	
-		# START BY REGULAR MEANS, LOCKING
-		if ( set -o noclobber; echo "$EVENT_NAME" > "$LOCKFILE") 2> /dev/null ; then
-			# Lock acquired, re-check
-			# The status can't be marked as "running" if lock was acquired
-			VID_CHANNEL_STATUS=`cat "${VID_CHANNEL_STATUS_FILE}" 2> /dev/null`
-			if [[ "${VID_CHANNEL_STATUS}" == "done" && ${OVERWRITE_ALL} == NO ]]; then
-				log_OK "${CHANNEL} \"${video}\" already marked as done."
-				NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
-				rm -f "${LOCKFILE}"
-				continue
-			fi
-		
-			# Launch job
-			run_job_sequential
-			# {Lock released}
-		
-			if [[ $? == 0 ]]; then
-				NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
-			fi
-		else
-			if [[ ${FORCE_START} == NO ]]; then
-				log_WARN "${CHANNEL} job already registered for \"${video}\". Owner: \"`cat "$LOCKFILE"`\". See option \"--force-start\"."
-				NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
-			else
-				# Force start
-				log_WARN "Force start on ${CHANNEL} \"${video}\". Original owner: \"`cat "$LOCKFILE"`\""
-				run_job_sequential
-				if [[ $? == 0 ]]; then
-					NB_DESCRIPTORS_MISSING=$(( ${NB_DESCRIPTORS_MISSING} - 1 ))
-				fi
-			fi
-		fi
-	done < "${COMP_DESC_QUEUE_FILE}"
-	log_INFO "Missing ${NB_DESCRIPTORS_MISSING} descriptors."
-	
+CHANNELS=""
+while read -r channel; do
+	CHANNELS="${CHANNELS} -c ${channel}"
 done < "${CHANNELS_FILE}"
-	
-exit ${NB_DESCRIPTORS_MISSING}
+
+OTHER_PARAMS=""
+if [ $FORCE_START == YES ]; then
+	OTHER_PARAMS="${OTHER_PARAMS} --force-start"
+fi
+if [ $CLEAN_STATE_RUNNING == YES ]; then
+	OTHER_PARAMS="${OTHER_PARAMS} --clean-state-running"
+fi
+if [ $OVERWRITE_ALL == YES ]; then
+	OTHER_PARAMS="${OTHER_PARAMS} --overwrite-all"
+fi
+./video_run_descriptor_extraction.sh --event-name "${EVENT_NAME}" ${CHANNELS} --video-list "${COMP_DESC_QUEUE_FILE}" --parallel ${NB_INSTANCES} ${OTHER_PARAMS}
+
 
 
 
