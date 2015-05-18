@@ -1,4 +1,6 @@
 #!/bin/bash
+# INRIA LEAR team, 2015
+# Xavier Martin xavier.martin@inria.fr
 USAGE_STRING="
 # Usage: denseTrack_extraction.sh VIDNAME --scenecutfile FILE
 #

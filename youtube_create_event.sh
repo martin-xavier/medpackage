@@ -144,8 +144,11 @@ fi
 set -e
 
 log_INFO "Fetching list of youtube hits..."
-elinks -dump 1 -no-numbering "https://www.youtube.com/results?lclk=short&search_query=${EVENT_NAME}&filters=short" > elinks_out.tmp
-VIDEOS=( $( cat elinks_out.tmp | grep watch | awk -F "watch\\\\?v=" '{ print $2 }' | uniq ) )
+#elinks -dump 1 -no-numbering "https://www.youtube.com/results?lclk=short&search_query=${EVENT_NAME}&filters=short" > elinks_out.tmp
+elinks -source 1 -no-numbering "https://www.youtube.com/results?lclk=short&search_query=${EVENT_NAME}&filters=short" > elinks_out.tmp
+
+#VIDEOS=( $( cat elinks_out.tmp | sed -n -e '/References/,$p' | grep watch | awk -F "watch\\\\?v=" '{ print $2 }' | uniq ) )
+VIDEOS=( $( cat elinks_out.tmp | grep "watch?v=" | awk -F "watch\\\\?v=" '{ print $2 }' | awk -F "\"" '{ print $1 }' | uniq ) )
 rm elinks_out.tmp
 
 log_OK "Found ${#VIDEOS[@]} videos."
@@ -168,7 +171,7 @@ done ) > "${EVENT_DIR}/positive.txt"
 	echo "${BG_VIDEOS[${i}]}"
 done ) > "${EVENT_DIR}/background.txt"
 
-./event_init.sh "${EVENT_NAME}" ${OVERWRITE}
+./event_init.sh "${EVENT_NAME}" ${OVERWRITE} --channels <( for (( i = 0; i < ${#CHANNELS[@]}; i++ )); do echo ${CHANNELS[${i}]}; done )
 
 ./event_run_descriptor_extraction.sh "${EVENT_NAME}" --parallel ${NB_INSTANCES}
 

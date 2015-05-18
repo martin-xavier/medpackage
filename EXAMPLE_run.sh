@@ -15,7 +15,7 @@ trap 'test_ERR "stage failed"; exit 1' ERR
 
 EVENT_NAME="UCF-101/biking UCF-101"
 
-#test_INFO "Creating test event"
+#test_INFO "Creating test event $EVENT_NAME"
 #test_OK "Running test suite"
 #test_ERR "Error: not working"
 #test_WARN "Warning: this is visible"
@@ -35,7 +35,10 @@ rm -rf "events/${EVENT_NAME}/workdir/"
 
 ./event_status.sh "$EVENT_NAME"
 
+#test_INFO "Training classifier"
+
 ./event_run_training.sh "${EVENT_NAME}"
 
 ./event_status.sh "$EVENT_NAME"
 
+test_OK "All done, classifier ready for $EVENT_NAME."
