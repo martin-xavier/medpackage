@@ -3,6 +3,26 @@
 USAGE_STRING="
 # This script queries youtube for a given event name,
 # downloads N first results and learns a classifier from them.
+#
+# Options:
+#
+# 	--nb-positive NB
+#		Number of positive videos to fetch from youtube.
+#
+#	--background-vids LIST_FILENAME
+#		List of videos to use as background.
+#
+#	-c|--channel CHANNEL
+#		Add a descriptor channel.
+#
+#		
+#	--parallel NB_PARALLEL
+#		Instances of descriptor extraction.
+#
+#	--overwrite
+#		Existing event with the same name will be overwritten.
+#		
+#	--event-name EVENT_NAME
 "
 
 set -u
@@ -15,15 +35,14 @@ log_TITLE "Automated class creator"
 ##
 re='^[0-9]+$'
 
-FORCE_START=NO
 OVERWRITE=""
-CLEAN_STATE_RUNNING=NO
 NB_INSTANCES=1
 SHOT_SEPARATION=NO
 CHANNELS=()
 BG_VIDEOS=()
 
 NB_INSTANCES=1
+NB_POSITIVE=""
 
 # hidden option
 EVENT_NAME=""
@@ -41,6 +60,15 @@ while [[ $# > 0 ]]
 		echo "$USAGE_STRING"
 		exit 1
 		;;
+		--nb-positive)
+		NB_POSITIVE="$2"
+		shift
+		if ! [[ $NB_POSITIVE =~ $re ]] ; then
+			echo "$USAGE_STRING"
+			log_ERR "--nb-positive: Expecting an integer"
+			exit 1
+		fi
+		;;
 		--background-vids)
 		while read -r video; do
 			BG_VIDEOS+=( "$video" )
@@ -52,29 +80,14 @@ while [[ $# > 0 ]]
 		CHANNELS+=( "$2" )
 		shift
 		;;
-		--shot-separation)
-		if [[ "$2" == "NO" || "$2" == "YES" ]]; then
-			SHOT_SEPARATION=$2
-		else
-			echo "$USAGE_STRING"
-			log_ERR "Invalid value for --shot-separation (expecting YES or NO)."
-		fi
-		shift
-		;;
 		--parallel)
 		NB_INSTANCES="$2"
-		shift
 		if ! [[ $NB_INSTANCES =~ $re ]] ; then
 			echo "$USAGE_STRING"
 			log_ERR "--parallel: Expecting an integer"
 			exit 1
 		fi
-		;;
-		--force-start)
-		FORCE_START=YES
-		;;
-		--clean-state-running)
-		CLEAN_STATE_RUNNING=YES
+		shift
 		;;
 		--overwrite)
 		OVERWRITE="--overwrite"
@@ -86,13 +99,14 @@ while [[ $# > 0 ]]
 		;;
 		*)
 		# Event name here
-		EVENT_NAME="$key"
+		#EVENT_NAME="$key"
 		;;
 	esac
 	shift
 done
 
 if [ "${EVENT_NAME}" == "" ]; then
+	echo "$USAGE_STRING"
 	log_ERR "Need to specify an event name"
 	exit 1
 fi
@@ -107,6 +121,16 @@ fi
 if [[ ${#BG_VIDEOS[@]} -eq 0 ]]; then
 	echo "$USAGE_STRING"
 	log_ERR "Need at least one background video, see option --background-vids."
+	exit 1
+fi
+
+if [ "$NB_POSITIVE" == "" ]; then
+	echo "$USAGE_STRING"
+	log_ERR "Need to specify amount of positive training videos, see option --nb-positive."
+	exit 1
+elif [ $NB_POSITIVE -lt 4 ]; then
+	echo "$USAGE_STRING"
+	log_ERR "The amount of positive training videos needs to be an integer above or equal to 4."
 	exit 1
 fi
 
@@ -141,25 +165,34 @@ if [ "${YOUTUBE_DL}" == "" ]; then
 	exit 1
 fi
 
-set -e
+#set -e
 
+NB_PAGES=`echo "${NB_POSITIVE} / 20.0" | bc -l`
+NB_PAGES=`echo "(${NB_PAGES}+1) / 1" | bc`
 log_INFO "Fetching list of youtube hits..."
 #elinks -dump 1 -no-numbering "https://www.youtube.com/results?lclk=short&search_query=${EVENT_NAME}&filters=short" > elinks_out.tmp
-elinks -source 1 -no-numbering "https://www.youtube.com/results?lclk=short&search_query=${EVENT_NAME}&filters=short" > elinks_out.tmp
+
+echo -n "" > elinks_out.tmp
+for i in $( seq 1 ${NB_PAGES} ); do
+	elinks -source 1 -no-numbering "https://www.youtube.com/results?lclk=short&search_query=${EVENT_NAME}&filters=short&page=${i}" >> elinks_out.tmp
+done
+
 
 #VIDEOS=( $( cat elinks_out.tmp | sed -n -e '/References/,$p' | grep watch | awk -F "watch\\\\?v=" '{ print $2 }' | uniq ) )
-VIDEOS=( $( cat elinks_out.tmp | grep "watch?v=" | awk -F "watch\\\\?v=" '{ print $2 }' | awk -F "\"" '{ print $1 }' | uniq ) )
+VIDEOS=( $( cat elinks_out.tmp | grep "watch?v=" | awk -F "watch\\\\?v=" '{ print $2 }' | awk -F "\"" '{ print $1 }' | uniq | head -n ${NB_POSITIVE} ) )
 rm elinks_out.tmp
 
 log_OK "Found ${#VIDEOS[@]} videos."
 
 
 for (( i = 0; i < ${#VIDEOS[@]}; i++ )); do
-	log_IMPORTANT "Downloading video $(( ${i} + 1 ))/${#VIDEOS[@]}."
-	youtube-dl -f best -o "videos/_youtube/${VIDEOS[${i}]}" ${VIDEOS[${i}]};
+	log_IMPORTANT "Downloading video ${VIDEOS[${i}]} ($(( ${i} + 1 ))/${#VIDEOS[@]})."
+	youtube-dl -f best -o "videos/_youtube/${VIDEOS[${i}]}" "https://www.youtube.com/watch?v=${VIDEOS[${i}]}";
 done
 
 log_OK "Videos downloaded. Initializing event..."
+
+set -e
 
 EVENT_DIR="events/${EVENT_NAME}"
 mkdir -p "${EVENT_DIR}"
@@ -171,7 +204,7 @@ done ) > "${EVENT_DIR}/positive.txt"
 	echo "${BG_VIDEOS[${i}]}"
 done ) > "${EVENT_DIR}/background.txt"
 
-./event_init.sh "${EVENT_NAME}" ${OVERWRITE} --channels <( for (( i = 0; i < ${#CHANNELS[@]}; i++ )); do echo ${CHANNELS[${i}]}; done )
+./event_init.sh "${EVENT_NAME}" ${OVERWRITE} --channels <( for (( i = 0; i < ${#CHANNELS[@]}; i++ )); do echo ${CHANNELS[${i}]}; done ) --check-missing
 
 ./event_run_descriptor_extraction.sh "${EVENT_NAME}" --parallel ${NB_INSTANCES}
 
