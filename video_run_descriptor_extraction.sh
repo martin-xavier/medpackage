@@ -177,7 +177,8 @@ if [ $NB_INSTANCES -gt 1 ]; then
 	PIDS=()
 	# Spawn instances
 	for (( i = 0; i < ${NB_INSTANCES}; i++ )); do
-		xterm -e "./video_run_descriptor_extraction.sh ${CHANNELS_STR} --video-list processing/tmp_videolist" &
+		#xterm -e "./video_run_descriptor_extraction.sh ${CHANNELS_STR} --video-list processing/tmp_videolist" &
+		bash -c "./video_run_descriptor_extraction.sh ${CHANNELS_STR} --video-list processing/tmp_videolist" &
 		PIDS+=($!)
 		log_OK "Spawned PID $!"
 	done
