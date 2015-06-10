@@ -47,6 +47,13 @@ if [ ! -e "${MED_BASEDIR}/../videos/${VIDNAME}" ]; then
 	exit 1
 fi
 
+# Check that DenseTrackStab exists
+which DenseTrackStab 1>/dev/null 2>/dev/null
+if [ $? -ne 0 ]; then
+	log_ERR "Couldn't find DenseTrackStab in PATH. Compile the dense trajectories executable and make sure it is available in your PATH environment variable."
+	exit 1
+fi
+
 if [ "${SCENECUTFILE}" == "" ]; then
 	python "${MED_BASEDIR}/compute_descriptors/denseTrack/densetrack_to_fisher_shot_errorprotect.py" --video "${VIDNAME}" --split train -k 256 --redo --slice 1 --save slice --featurepath "${MED_BASEDIR}videos_workdir/${VIDNAME}"
 else

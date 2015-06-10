@@ -26,7 +26,8 @@ from utils import regular_multidim_digitize
 # Number of descriptors that are read at once from DenseTrack.
 NR_DESCRIPTORS = 10000
 #DENSE_TRACK = '/home/lear/oneata/experiments/trecvid14/DenseTrack_ijcv14_stab_320'
-DENSE_TRACK = MED_BASEDIR + 'usr/bin/DenseTrackStab'
+#DENSE_TRACK = MED_BASEDIR + 'usr/bin/DenseTrackStab'
+DENSE_TRACK = 'DenseTrackStab'
 
 DESCRIPTOR_TYPES = ['hog', 'hof', 'mbhx', 'mbhy']
 DESC_SIZE = {
