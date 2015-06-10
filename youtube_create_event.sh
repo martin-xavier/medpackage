@@ -6,6 +6,8 @@ USAGE_STRING="
 #
 # Options:
 #
+#	--event-name EVENT_NAME
+#
 # 	--nb-positive NB
 #		Number of positive videos to fetch from youtube.
 #
@@ -22,7 +24,6 @@ USAGE_STRING="
 #	--overwrite
 #		Existing event with the same name will be overwritten.
 #		
-#	--event-name EVENT_NAME
 "
 
 set -u

@@ -105,11 +105,3 @@ while read -r CHANNEL; do
 		echo -e "${TXT_BOLD}Descriptors:${TXT_RESET} waiting: $NB_WAITING; running: ${NB_RUNNING}; done: ${NB_DONE}."
 	fi
 done < "${WORK_DIR}/channels.list"
-
-#echo -e "Partial classifier available.\nTrained on 2015-03-26 with 56 positive and 35 background videos."
-
-#if [[ "`cat $EVENT_NAME
-
-#./processing/compute_descriptors.sh
-#RES=$?
-
