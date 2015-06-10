@@ -1,0 +1,10 @@
+*.pyc
+*.swp
+*.swo
+*~
+data
+threadsafe_classifier/_libsvm_precomputed.so
+threadsafe_classifier/libsvm_precomputed.py
+threadsafe_classifier/libsvm_precomputed_wrap.c
+threadsafe_classifier/libsvm_precomputed_wrap.o
+threadsafe_classifier/svm.o
