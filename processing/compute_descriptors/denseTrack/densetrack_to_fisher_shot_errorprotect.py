@@ -311,8 +311,8 @@ def main():
         sys.exit(1)
 
     #BASEPATH = "/home/lear/oneata/data/thumos14"
-    PCA = MED_BASEDIR + "vocab/MED15/pca/%s/features_pca_k256.npz"
-    GMM = MED_BASEDIR + "vocab/MED15/gmm/%s/features_k256.gmm"
+    PCA = MED_BASEDIR + "compute_descriptors/denseTrack/vocab/MED15/pca/%s/features_pca_k256.npz"
+    GMM = MED_BASEDIR + "compute_descriptors/denseTrack/vocab/MED15/gmm/%s/features_k256.gmm"
 
     #video_path = os.path.join(BASEPATH, 'videos', args.split, args.video)
     video_path = os.path.join(
