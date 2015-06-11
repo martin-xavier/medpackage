@@ -1,9 +1,6 @@
-#
-#   MED package
-#   11 June 2015
-#   contact: Xavier Martin (xavier.martin@inria.fr)
-#   INRIA LEAR team (http://lear.inrialpes.fr)
-#
+#   MED package (11 June 2015)
+##   contact: Xavier Martin (firstname.lastname >AT< inria.fr)
+##   INRIA LEAR team (http://lear.inrialpes.fr)
 
 What is this?
 -------------
