@@ -126,7 +126,7 @@ fi
 source processing/config_MED.sh
 mkdir -p ${OUTPUT_DIRECTORY}
 
-which lockfile
+which lockfile > /dev/null
 if [ $? -eq 0 ]; then
 	COMPUTE_SCORES_SCRIPT_PY="processing/compute_scores/compute_scores.py"
 else
