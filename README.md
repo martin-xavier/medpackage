@@ -21,10 +21,10 @@ What are the dependencies?
 --------------------------
 To run descriptor extraction, you will likely need to compile by hand these items:
 
-1) FFMpeg (devel)  http://ffmpeg.org/download.html
-2) OpenCV (devel, FFMpeg interface enabled, depends on FFMpeg devel)  http://opencv.org/
-3) yael library https://gforge.inria.fr/projects/yael/
-4) Dense trajectories extractor http://lear.inrialpes.fr/people/wang/download/improved_trajectory_release.tar.gz
+1. FFMpeg (devel)  http://ffmpeg.org/download.html
+2. OpenCV (devel, FFMpeg interface enabled, depends on FFMpeg devel)  http://opencv.org/
+3. yael library https://gforge.inria.fr/projects/yael/
+4. Dense trajectories extractor http://lear.inrialpes.fr/people/wang/download/improved_trajectory_release.tar.gz
 
 For miscelleanous dependencies, use script "install_dependencies.sh".
 Those include packages youtube-dl, elinks, and procmail.
@@ -80,8 +80,8 @@ By default, the videos are ranked using Heng Wang's "Dense Trajectories" (denseT
 Adding new channels and integrating them is quite easy.
 The required files are:
 
-./processing/compute_descriptors/YourChannel/YourChannel_descriptors.list
-./processing/compute_descriptors/YourChannel/YourChannel_extraction.sh
+- processing/compute_descriptors/YourChannel/YourChannel_descriptors.list
+- processing/compute_descriptors/YourChannel/YourChannel_extraction.sh
 
 "denseTrack" follows this format and is a good starting point.
 
@@ -100,6 +100,7 @@ If you find a bug, have a suggestion or want to make a contribution, I welcome y
 I hope you enjoy playing around with this package and use it for awesome projects.
 Do feel free to tell me all about it.
 
-Thank you,
-Xavier (xavier.martin@inria.fr)
 
+Thank you,
+
+Xavier
