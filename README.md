@@ -17,9 +17,21 @@ AXES is a joint effort between researchers, content providers and industrial par
 to get a grasp on large multimedia data banks such as those kept by major broadcasters.
 http://www.axes-project.eu/
 
+What are the dependencies?
+--------------------------
+To run descriptor extraction, you will likely need to compile by hand these items:
+
+1) FFMpeg (devel)  http://ffmpeg.org/download.html
+2) OpenCV (devel, FFMpeg interface enabled, depends on FFMpeg devel)  http://opencv.org/
+3) yael library https://gforge.inria.fr/projects/yael/
+4) Dense trajectories extractor http://lear.inrialpes.fr/people/wang/download/improved_trajectory_release.tar.gz
+
+For miscelleanous dependencies, use script "install_dependencies.sh".
+Those include packages youtube-dl, elinks, and procmail.
+
 
 How do I use it?
------------------
+----------------
 Setting up the package may require compiling FFMpeg or OpenCV from source.
 However, when properly set up, the only requirement is knowing your way around a terminal.
 

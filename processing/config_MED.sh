@@ -13,8 +13,7 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 export MED_BASEDIR="${DIR}/"
 
-# DenseTrackStab
-export LD_LIBRARY_PATH=/home/lear/pweinzae/localscratch/libraries/opencv-2.4.9/release/lib:/usr/lib64
+export LD_LIBRARY_PATH=/usr/lib64:${LD_LIBRARY_PATH}
 
 export PATH=${MED_BASEDIR}usr/bin:${MED_BASEDIR}usr/yael/progs:${MED_BASEDIR}usr/scripts:${PATH}
 export LD_LIBRARY_PATH=${MED_BASEDIR}usr/yael/yael:${LD_LIBRARY_PATH}
