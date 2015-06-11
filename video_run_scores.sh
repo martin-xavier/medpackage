@@ -120,9 +120,21 @@ if [ "${OUTPUT_DIRECTORY}" == "" ]; then
 	exit 1
 fi
 
+# test whether lockfile is available
+
+
 source processing/config_MED.sh
 mkdir -p ${OUTPUT_DIRECTORY}
-python processing/compute_scores/compute_scores.py --videos <( for (( i=0; i < ${#VIDEO_LIST[@]}; i++ )); do echo ${VIDEO_LIST[${i}]}; done )\
+
+which lockfile
+if [ $? -eq 0 ]; then
+	COMPUTE_SCORES_SCRIPT_PY="processing/compute_scores/compute_scores.py"
+else
+	COMPUTE_SCORES_SCRIPT_PY="processing/compute_scores/compute_scores_singlethread.py"
+	log_WARN "Couldn't find \"lockfile\", scores will be computed in single-threaded mode."
+fi
+
+python ${COMPUTE_SCORES_SCRIPT_PY} --videos <( for (( i=0; i < ${#VIDEO_LIST[@]}; i++ )); do echo ${VIDEO_LIST[${i}]}; done )\
                     --events <( for (( i=0; i < ${#EVENT_LIST[@]}; i++ )); do echo ${EVENT_LIST[${i}]}; done ) --output-directory ${OUTPUT_DIRECTORY}
 
 
