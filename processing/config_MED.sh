@@ -13,7 +13,7 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 export MED_BASEDIR="${DIR}/"
 
-export LD_LIBRARY_PATH=/usr/lib64:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=/usr/lib64:${LD_LIBRARY_PATH:=''}
 
 export PATH=${MED_BASEDIR}usr/bin:${MED_BASEDIR}usr/yael/progs:${MED_BASEDIR}usr/scripts:${PATH}
 export LD_LIBRARY_PATH=${MED_BASEDIR}usr/yael/yael:${LD_LIBRARY_PATH}

@@ -2,7 +2,7 @@ import sys
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:
-        print "Usage: script INSCOREFILE OUTSCOREFILE DATASET"
+        print "Usage: script INSCOREFILE OUTSCOREFILE"
         sys.exit(1)
     scorefile = sys.argv[1]
     outscorefile = sys.argv[2]
