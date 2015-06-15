@@ -19,12 +19,16 @@ http://www.axes-project.eu/
 
 What are the dependencies?
 --------------------------
-To run descriptor extraction, you will likely need to compile by hand these items:
+To run descriptor extraction, you will need the following items:
 
 1. FFMpeg (devel)  http://ffmpeg.org/download.html
 2. OpenCV (devel, FFMpeg interface enabled, depends on FFMpeg devel)  http://opencv.org/
 3. yael library https://gforge.inria.fr/projects/yael/
 4. Dense trajectories extractor http://lear.inrialpes.fr/people/wang/download/improved_trajectory_release.tar.gz
+
+FFMpeg devel should be available in your distribution, the naming conventions vary.
+You will probably need to compile OpenCV from source since you need the FFMpeg interface.
+As for dense trajectories, there is no escaping it. :-)
 
 For miscelleanous dependencies, use script "install_dependencies.sh".
 Those include packages youtube-dl, elinks, and procmail.

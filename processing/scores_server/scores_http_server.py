@@ -291,7 +291,7 @@ class EventRecognitionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         
         argList = args.split('&')
         if len(argList) != nbArgs:
-            print>>self.wfile,"get_args error: incorrect nbArgs"
+            #print>>self.wfile,"get_args error: incorrect nbArgs"
             return -1
         else:
             for arg in argList:
