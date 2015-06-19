@@ -3,7 +3,7 @@
 # Xavier Martin xavier.martin@inria.fr
 
 USAGE_STRING="
-# Usage: video_run_descriptor_extraction.sh [ --force-start ] [ --overwrite-all ]
+# Usage: video_run_descriptor_extraction.sh
 #
 # --video-list FILENAME
 #
@@ -27,6 +27,10 @@ USAGE_STRING="
 #
 # --overwrite-all
 #     -> starts extraction for all videos, even those already processed
+#
+# --collection-dir DIR
+#     If your events are defined in a separate collection directory, specify it here.
+#     This defaults to the package's base directory, and dictates where descriptors will be saved.
 #
 #
 # RETURN VALUE (non-parallel): number of missing videos
@@ -65,6 +69,9 @@ CHANNELS=()
 # hidden option
 EVENT_NAME=""
 
+# accept collection dir as environment variable
+COLLECTION_DIR=${COLLECTION_DIR:='./'}
+
 while [[ $# > 0 ]]
 	do
 	key="$1"
@@ -79,6 +86,7 @@ while [[ $# > 0 ]]
 		exit 1
 		;;
 		--video-list)
+		echo "Reading vids from $2"
 		while read -r video; do
 			VIDEOS+=( "$video" )
 		done < "$2"
@@ -121,9 +129,11 @@ while [[ $# > 0 ]]
 		EVENT_NAME="$2"
 		shift
 		;;
+		--collection-dir)
+		COLLECTION_DIR="$2"
+		shift
+		;;
 		*)
-		# Event name here
-		EVENT_NAME="$key"
 		;;
 	esac
 	shift
@@ -141,7 +151,7 @@ elif [[ ${#CHANNELS[@]} -eq 0 ]]; then
 	exit 1
 fi
 
-VIDS_WORK_DIR="processing/videos_workdir/"
+VIDS_WORK_DIR="${COLLECTION_DIR}/processing/videos_workdir/"
 
 
 echo      "--------------------"
@@ -164,10 +174,11 @@ function killChildProcesses {
 }
 
 if [ $NB_INSTANCES -gt 1 ]; then
+	TMP_VIDEOLIST="${COLLECTION_DIR}/processing/tmp_videolist_`uuidgen`"
 	# This instance acts as the master.
 	( for (( i = 0; i < ${#VIDEOS[@]}; i++ )); do
 		echo ${VIDEOS[${i}]}
-	done ) > processing/tmp_videolist
+	done ) > "${TMP_VIDEOLIST}"
 	
 	CHANNELS_STR=""
 	for i in ${CHANNELS[@]}; do 
@@ -178,7 +189,7 @@ if [ $NB_INSTANCES -gt 1 ]; then
 	# Spawn instances
 	for (( i = 0; i < ${NB_INSTANCES}; i++ )); do
 		#xterm -e "./video_run_descriptor_extraction.sh ${CHANNELS_STR} --video-list processing/tmp_videolist" &
-		bash -c "./video_run_descriptor_extraction.sh ${CHANNELS_STR} --video-list processing/tmp_videolist" &
+		bash -c "./video_run_descriptor_extraction.sh ${CHANNELS_STR} --video-list \"${TMP_VIDEOLIST}\"" &
 		PIDS+=($!)
 		log_OK "Spawned PID $!"
 	done
@@ -201,7 +212,7 @@ if [ $NB_INSTANCES -gt 1 ]; then
 	#	log_ERR "Missing $RETVAL descriptors."
 	#fi
 	
-	rm -f processing/tmp_videolist
+	rm -f "${TMP_VIDEOLIST}"
 	exit 0
 fi
 
@@ -226,9 +237,9 @@ function run_job_sequential {
 	log_INFO "Launching job for \"$video\"."
 	
 	if [ "${SHOT_SEPARATION}" == "NO" ]; then
-		./processing/compute_descriptors/${CHANNEL}/${CHANNEL}_extraction.sh "${video}"
+		./processing/compute_descriptors/${CHANNEL}/${CHANNEL}_extraction.sh "${video}" --collection-dir "${COLLECTION_DIR}"
 	else
-		./processing/compute_descriptors/${CHANNEL}/${CHANNEL}_extraction.sh "${video}" --scenecutfile "${MED_BASEDIR}../shots/${video}.scenecut"
+		./processing/compute_descriptors/${CHANNEL}/${CHANNEL}_extraction.sh "${video}" --scenecutfile "${COLLECTION_DIR}/shots/${video}.scenecut" --collection-dir "${COLLECTION_DIR}"
 	fi
 	
 	if [[ $? == 0 ]]; then

@@ -293,7 +293,8 @@ def main():
     """
     parser = argparse.ArgumentParser(description=__doc__)
 
-    parser.add_argument('--video', help="video name (directory: 'videos')")
+    parser.add_argument('--video', help="video name")
+    parser.add_argument('--videodir', default=['videos'], help="video directory (default: 'videos')")
     parser.add_argument('-k', '--nr_clusters', default=['64'], nargs='+', help="number of GMM clusters.")
     parser.add_argument('-s', '--split', choices=SPLITS, default='train', help="which split of the data to use.")
     parser.add_argument('--redo', default=False, action='store_true')
@@ -316,7 +317,7 @@ def main():
 
     #video_path = os.path.join(BASEPATH, 'videos', args.split, args.video)
     video_path = os.path.join(
-                'videos',
+                args.videodir,
                 args.video)
     #filelist_path = os.path.join(BASEPATH, 'filelists', '%s.list' % args.split)
     """

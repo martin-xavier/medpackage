@@ -3,9 +3,13 @@
 # Xavier Martin xavier.martin@inria.fr
 
 USAGE_STRING="
-# Usage: event_status.sh \"EVENT_NAME\"
+# Usage: event_status.sh \"EVENT_NAME\" [ --collection-dir DIR ]
 #
 # Reports status string and jobs currently in queue where applicable.
+#
+# --collection-dir DIR
+#     If your events are defined in a separate collection directory, specify it here.
+#     This defaults to the package's base directory, and dictates where descriptors will be saved.
 "
 #
 # SWITCHING TO MED DIRECTORY
@@ -29,13 +33,35 @@ WARNING_COLOR="${TXT_RED}WARNING${TXT_RESET}"
 #
 # PARSE ARGUMENT
 #
-if [[ "$1" == "" ]]; then
-	echo "$USAGE_STRING"
-	exit 1
-fi
-EVENT_NAME="$1"
 
+# accept collection dir as environment variable
+COLLECTION_DIR=${COLLECTION_DIR:='./'}
+EVENT_NAME=""
+while [[ $# > 0 ]]
+	do
+	key="$1"
 
+	case $key in
+#    	-e|--extension)
+#	    EXTENSION="$2"
+#	    shift
+#	    ;;
+		-h|--help)
+		echo "$USAGE_STRING"
+		exit 1
+		;;
+		--collection-dir)
+		COLLECTION_DIR="$2"
+		shift
+		;;
+		*)
+		# Event name here
+		EVENT_NAME=$key
+		;;
+	esac
+	shift
+done
+if [[ "$EVENT_NAME" == "" ]]; then echo "${USAGE_STRING}"; exit 1; fi
 
 
 echo      "--------------------"
@@ -44,13 +70,13 @@ echo      "--------------------"
 #
 # CHECK EXISTENCE
 #
-EV_DIR="events/${EVENT_NAME}"
+EV_DIR="${COLLECTION_DIR}/events/${EVENT_NAME}"
 WORK_DIR="$EV_DIR/workdir"
 STATUS_FILE="$WORK_DIR/status"
 POSITIVE_FILE="$WORK_DIR/_positive.txt"
 BACKGROUND_FILE="$WORK_DIR/_background.txt"
 COMP_DESC_QUEUE_FILE="$WORK_DIR/compute_descriptors_queue"
-VIDS_WORK_DIR="processing/videos_workdir/"
+VIDS_WORK_DIR="${COLLECTION_DIR}/processing/videos_workdir/"
 CLASSIFIERS_DIR="$EV_DIR/classifiers"
 
 # EVENT NAME AND STATUS

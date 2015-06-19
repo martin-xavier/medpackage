@@ -18,6 +18,10 @@ USAGE_STRING="
 # --overwrite-all
 #     -> starts extraction for all videos, even those already processed
 #
+# --collection-dir DIR
+#     If your events are defined in a separate collection directory, specify it here.
+#     This defaults to the package's base directory, and dictates where descriptors will be saved.
+#
 # RETURN VALUE (non-parallel): number of missing videos
 #
 # Requires all components to be compiled.
@@ -45,6 +49,9 @@ FORCE_START=NO
 OVERWRITE_ALL=NO
 CLEAN_STATE_RUNNING=NO
 NB_INSTANCES=1
+
+# accept collection dir as environment variable
+COLLECTION_DIR=${COLLECTION_DIR:='./'}
 
 while [[ $# > 0 ]]
 	do
@@ -78,6 +85,10 @@ while [[ $# > 0 ]]
 		--overwrite-all)
 		OVERWRITE_ALL=YES
 		;;
+		--collection-dir)
+		COLLECTION_DIR="$2"
+		shift
+		;;
 		*)
 		# Event name here
 		EVENT_NAME="$key"
@@ -91,11 +102,11 @@ if [[ "$EVENT_NAME" == "" ]]; then
 	exit 1
 fi
 
-EV_DIR="events/${EVENT_NAME}"
+EV_DIR="${COLLECTION_DIR}/events/${EVENT_NAME}"
 WORK_DIR="$EV_DIR/workdir"
 STATUS_FILE="$WORK_DIR/status"
 COMP_DESC_QUEUE_FILE="$WORK_DIR/compute_descriptors_queue"
-VIDS_WORK_DIR="processing/videos_workdir/"
+VIDS_WORK_DIR="${COLLECTION_DIR}/processing/videos_workdir/"
 CHANNELS_FILE="${WORK_DIR}/channels.list"
 
 

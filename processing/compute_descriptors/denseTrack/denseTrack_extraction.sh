@@ -2,9 +2,9 @@
 # INRIA LEAR team, 2015
 # Xavier Martin xavier.martin@inria.fr
 USAGE_STRING="
-# Usage: denseTrack_extraction.sh VIDNAME --scenecutfile FILE
+# Usage: denseTrack_extraction.sh VIDNAME --scenecutfile FILE  --collection-dir DIR
 #
-# The path of the video is assumed to start from the MED_BASEDIR/../videos/ directory.
+# The path of the video is COLLECTION_DIR/videos if set, else it is assumed to start from the MED_BASEDIR/../videos/ directory.
 #
 # Requires all components to be compiled.
 "
@@ -12,6 +12,7 @@ USAGE_STRING="
 source "${MED_BASEDIR}usr/scripts/bash_utils.sh"
 
 SCENECUTFILE=""
+COLLECTION_DIR="./"
 while [[ $# > 0 ]]
 	do
 	key="$1"
@@ -33,6 +34,14 @@ while [[ $# > 0 ]]
 		fi
 		shift
 		;;
+		--collection-dir)
+		COLLECTION_DIR="$2"
+		if [ ! -e "${COLLECTION_DIR}" ]; then
+			log_ERR "Collection directory \"${COLLECTION_DIR}\" does not exist."
+			exit 1
+		fi
+		shift
+		;;
 		*)
 		# Video name here
 		VIDNAME="$key"
@@ -41,9 +50,14 @@ while [[ $# > 0 ]]
 	shift
 done
 
+
+VIDEOS_DIR="${COLLECTION_DIR}/videos/"
+VIDEOS_WORKDIR="${COLLECTION_DIR}/processing/videos_workdir/"
+
+
 # Check that video exists
-if [ ! -e "${MED_BASEDIR}/../videos/${VIDNAME}" ]; then
-	log_ERR "Video \"${MED_BASEDIR}/../videos/${VIDNAME}\" does not exist"
+if [ ! -e "${VIDEOS_DIR}${VIDNAME}" ]; then
+	log_ERR "Video \"${VIDEOS_DIR}${VIDNAME}\" does not exist"
 	exit 1
 fi
 
@@ -55,22 +69,20 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ "${SCENECUTFILE}" == "" ]; then
-	python "${MED_BASEDIR}/compute_descriptors/denseTrack/densetrack_to_fisher_shot_errorprotect.py" --video "${VIDNAME}" --split train -k 256 --redo --slice 1 --save slice --featurepath "${MED_BASEDIR}videos_workdir/${VIDNAME}"
+	python "${MED_BASEDIR}/compute_descriptors/denseTrack/densetrack_to_fisher_shot_errorprotect.py" --video "${VIDNAME}" --videodir "${VIDEOS_DIR}" --split train -k 256 --redo --slice 1 --save slice --featurepath "${VIDEOS_WORKDIR}${VIDNAME}"
 else
-	python "${MED_BASEDIR}/compute_descriptors/denseTrack/densetrack_to_fisher_shot_errorprotect.py" --video "${VIDNAME}" --split train -k 256 --redo --slice 1 --save slice --scenecut "${SCENECUTFILE}" --featurepath "${MED_BASEDIR}videos_workdir/${VIDNAME}/shots"
+	python "${MED_BASEDIR}/compute_descriptors/denseTrack/densetrack_to_fisher_shot_errorprotect.py" --video "${VIDNAME}" --videodir "${VIDEOS_DIR}" --split train -k 256 --redo --slice 1 --save slice --scenecut "${SCENECUTFILE}" --featurepath "${VIDEOS_WORKDIR}${VIDNAME}/shots"
 fi
 
 # CHECK RESULTS
-set -e
+#set -e
 for i in `cat "${MED_BASEDIR}compute_descriptors/denseTrack/denseTrack_descriptors.list"`;
 do
-	if [[ "${SCENECUTFILE}" == "" && ! -e "${MED_BASEDIR}/videos_workdir/${VIDNAME}/${i}.fvecs" ]]; then
-		echo "1: looking for ${MED_BASEDIR}/videos_workdir/${VIDNAME}/${i}.fvecs"
-		log_ERR "Descriptors not generated for \"${VIDNAME}\"."
+	if [[ "${SCENECUTFILE}" == "" && ! -e "${COLLECTION_DIR}/processing/videos_workdir/${VIDNAME}/${i}.fvecs" ]]; then
+		log_ERR "Couldn't find ${COLLECTION_DIR}/processing/videos_workdir/${VIDNAME}/${i}.fvecs"
 		exit 1
-	elif [[ ! "${SCENECUTFILE}" == "" && ! -e "${MED_BASEDIR}/videos_workdir/${VIDNAME}/shots/${i}.fvecs" ]]; then
-		echo "2: looking for ${MED_BASEDIR}/videos_workdir/${VIDNAME}/shots/${i}.fvecs"
-		log_ERR "Descriptors not generated for \"${VIDNAME}\"."
+	elif [[ ! "${SCENECUTFILE}" == "" && ! -e "${COLLECTION_DIR}/processing/videos_workdir/${VIDNAME}/shots/${i}.fvecs" ]]; then
+		log_ERR "Couldn't find ${COLLECTION_DIR}/processing/videos_workdir/${VIDNAME}/shots/${i}.fvecs"
 		exit 1
 	fi
 done

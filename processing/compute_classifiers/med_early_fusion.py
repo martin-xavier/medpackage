@@ -23,6 +23,8 @@ from early_fusion import libsvm_train, scores_to_probas, combine_kernels, Stats,
 
 #sys.path.append('/home/lear/oneata/src/med12lear/threadsafe_classifier')
 MED_DIR = os.getenv("MED_BASEDIR")
+COLLECTION_DIR = os.getenv("COLLECTION_DIR")
+
 sys.path.append(MED_DIR + 'compute_classifiers/med12lear/threadsafe_classifier')
 import libsvm_precomputed
 
@@ -688,7 +690,7 @@ def expand_dataset(indata, key = ''):
     """
 
     assert(indata.event_class != "")
-    if not os.path.isdir(MED_DIR + "../events/" + indata.event_class + "/workdir"):
+    if not os.path.isdir(COLLECTION_DIR + "/events/" + indata.event_class + "/workdir"):
         print "\nERROR: Could not find event class \"" + indata.event_class + "\", check arguments.\n"
         assert False
     
@@ -700,8 +702,8 @@ def expand_dataset(indata, key = ''):
     """ 
     # Disabled kernel cache path for safe concurrent execution
     #kernel_cache_path = MED_DIR + "compute_classifiers/kernel_cache/early_fusion/"
-    data_prefix = MED_DIR + "../events/" + indata.event_class + "/classifiers/" + key + "_classifier"
-    data_prefix_test = MED_DIR + "../events/" + indata.event_class + "/classifiers/early_fusion/scores/" + key
+    data_prefix = COLLECTION_DIR + "/events/" + indata.event_class + "/classifiers/" + key + "_classifier"
+    data_prefix_test = COLLECTION_DIR + "/events/" + indata.event_class + "/classifiers/early_fusion/scores/" + key
         
     #prepare_dir(kernel_cache_path)
     prepare_dir(data_prefix)

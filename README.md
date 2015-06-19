@@ -1,6 +1,6 @@
 #   MED package (11 June 2015)
-##   contact: Xavier Martin (firstname.lastname >AT< inria.fr)
 ##   INRIA LEAR team (http://lear.inrialpes.fr)
+     contact: Xavier Martin (firstname.lastname >AT< inria.fr)
 
 What is this?
 -------------
@@ -48,7 +48,14 @@ After gathering enough example videos, save them in the "./videos/" folder,
 list their access path (relative to the ./videos/ folder) in two text files,
 one for positive and one for background.
 
-You are ready to initialize your event.
+If you want to store your videos in a specific directory, export the following variable:
+
+export COLLECTION_DIR="/path/to/my/collection"
+
+And store your videos there. Alternatively, use the "--collection-dir" option available on all scripts.
+
+
+When the video storage is sorted out, you are ready to initialize your event.
 
     ./event_init.sh "cooking" --positive-vids positive_cooking.txt --background-vids background_cooking.txt
 

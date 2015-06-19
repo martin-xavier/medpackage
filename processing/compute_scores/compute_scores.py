@@ -35,6 +35,7 @@ import subprocess
 import uuid
 
 MED_DIR = os.getenv("MED_BASEDIR")
+COLLECTION_DIR = os.getenv("COLLECTION_DIR")
 
 
 def usage():
@@ -65,13 +66,13 @@ def computeScoresSingleVideo(vid):
     oneFilePerShot = False
     
     # TODO: properly test one-file-per-shot
-    if os.path.exists(MED_DIR + "videos_workdir/" + vid + "/shots/%09d/" % (1) + unionRequiredDescs[0] + ".fvecs"):
+    if os.path.exists(COLLECTION_DIR + "/processing/videos_workdir/" + vid + "/shots/%09d/" % (1) + unionRequiredDescs[0] + ".fvecs"):
         oneFilePerShot = True
-        descriptorsLocation = MED_DIR + "videos_workdir/" + vid + "/shots/"
-    elif os.path.exists(MED_DIR + "videos_workdir/" + vid + "/shots/" + unionRequiredDescs[0] + ".fvecs"):
-        descriptorsLocation = MED_DIR + "videos_workdir/" + vid + "/shots/"
-    elif os.path.exists(MED_DIR + "videos_workdir/" + vid + "/" + unionRequiredDescs[0] + ".fvecs"):
-        descriptorsLocation = MED_DIR + "videos_workdir/" + vid + "/"
+        descriptorsLocation = COLLECTION_DIR + "/processing/videos_workdir/" + vid + "/shots/"
+    elif os.path.exists(COLLECTION_DIR + "/processing/videos_workdir/" + vid + "/shots/" + unionRequiredDescs[0] + ".fvecs"):
+        descriptorsLocation = COLLECTION_DIR + "/processing/videos_workdir/" + vid + "/shots/"
+    elif os.path.exists(COLLECTION_DIR + "/processing/videos_workdir/" + vid + "/" + unionRequiredDescs[0] + ".fvecs"):
+        descriptorsLocation = COLLECTION_DIR + "/processing/videos_workdir/" + vid + "/"
     else:
         print "Error: couldn't find descriptors for " + vid + "."
         return 1
@@ -207,11 +208,11 @@ def main():
         print "Loading classifier and normalizer for", eventName
         eventObj = Event(eventName)
         eventNameShort = eventName.split('/')[-1:][0]
-        eventObj.classifier = pickle.load(open(MED_DIR + "../events/" + eventName + "/classifiers/" + eventNameShort + "_classifier.pickle"))
-        eventObj.normalizer = pickle.load(open(MED_DIR + "../events/" + eventName + "/classifiers/" + eventNameShort + "_classifier_normalizer.pickle"))
+        eventObj.classifier = pickle.load(open(COLLECTION_DIR + "/events/" + eventName + "/classifiers/" + eventNameShort + "_classifier.pickle"))
+        eventObj.normalizer = pickle.load(open(COLLECTION_DIR + "/events/" + eventName + "/classifiers/" + eventNameShort + "_classifier_normalizer.pickle"))
         
         # append the required descs for this event
-        channelList = open(MED_DIR + "../events/" + eventName + "/workdir/channels.list")
+        channelList = open(COLLECTION_DIR + "/events/" + eventName + "/workdir/channels.list")
         for c in channelList.read().splitlines():
             
             listDesc = open(MED_DIR + "compute_descriptors/" + c + "/" + c + "_descriptors.list")

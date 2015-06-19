@@ -3,10 +3,14 @@
 # Xavier Martin xavier.martin@inria.fr
 
 USAGE_STRING="
-# Usage: event_run_training.sh \"EVENT_NAME\"
+# Usage: event_run_training.sh \"EVENT_NAME\" [ --collection-dir DIR ]
 #
 # VERBOSE mode available, set this flag:
 #    export VERBOSE=1
+#
+# --collection-dir DIR
+#     If your events are defined in a separate collection directory, specify it here.
+#     This defaults to the package's base directory, and dictates where descriptors will be saved.
 "
 #
 # SWITCHING TO MED DIRECTORY
@@ -29,6 +33,8 @@ source processing/usr/scripts/bash_utils.sh
 ##
 EVENT_NAME=""
 
+# accept collection dir as environment variable
+COLLECTION_DIR=${COLLECTION_DIR:='./'}
 while [[ $# > 0 ]]
 	do
 	key="$1"
@@ -41,6 +47,10 @@ while [[ $# > 0 ]]
 		-h|--help)
 		echo "$USAGE_STRING"
 		exit 1
+		;;
+		--collection-dir)
+		COLLECTION_DIR="$2"
+		shift
 		;;
 		*)
 		# Event name here
@@ -73,5 +83,6 @@ while read -r CHANNEL; do
 done < "${CHANNELS_FILE}"
 
 source processing/config_MED.sh
+export COLLECTION_DIR
 python "processing/compute_classifiers/med_early_fusion.py" --train --event-class "${EVENT_NAME}" ${TRAINING_DESCS}
 

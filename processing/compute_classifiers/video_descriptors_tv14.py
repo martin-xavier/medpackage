@@ -18,6 +18,11 @@ from multiprocessing.dummy import Pool as ThreadPool
 from multiprocessing import cpu_count
 
 MED_DIR = os.getenv("MED_BASEDIR")
+COLLECTION_DIR = os.getenv("COLLECTION_DIR")
+if COLLECTION_DIR == None:
+    VIDEOS_WORKDIR = MED_DIR + "videos_workdir/"
+else:
+    VIDEOS_WORKDIR = COLLECTION_DIR + "/processing/videos_workdir/"
 
 ############################################################################################
 # Normalization functions
@@ -369,8 +374,8 @@ def load_descriptors_trajectory(event_class, video_list_filename, desctype, clip
     filenames = []
     if (desc_key == 'hog' or desc_key == 'hof'):
         for vid in video_list:
-            DESC_FILE = MED_DIR + "videos_workdir/" + vid + "/%s_fisher_vectors_k_256_descriptor.fvecs" % desc_key
-            DESC_SFV_FILE = MED_DIR + "videos_workdir/" + vid + "/%s_spatial_fisher_vectors_k_256_descriptor.fvecs" % desc_key
+            DESC_FILE = VIDEOS_WORKDIR + vid + "/%s_fisher_vectors_k_256_descriptor.fvecs" % desc_key
+            DESC_SFV_FILE = VIDEOS_WORKDIR + vid + "/%s_spatial_fisher_vectors_k_256_descriptor.fvecs" % desc_key
             filenames.append(DESC_FILE)
             filenames.append(DESC_SFV_FILE)
             
@@ -385,10 +390,10 @@ def load_descriptors_trajectory(event_class, video_list_filename, desctype, clip
         
     elif (desc_key == 'mbh'):
         for vid in video_list:
-            DESC_MBHX_FILE = MED_DIR + "videos_workdir/" + vid + "/%sx_fisher_vectors_k_256_descriptor.fvecs" % desc_key
-            DESC_MBHX_SFV_FILE = MED_DIR + "videos_workdir/" + vid + "/%sx_spatial_fisher_vectors_k_256_descriptor.fvecs" % desc_key
-            DESC_MBHY_FILE = MED_DIR + "videos_workdir/" + vid + "/%sy_fisher_vectors_k_256_descriptor.fvecs" % desc_key
-            DESC_MBHY_SFV_FILE = MED_DIR + "videos_workdir/" + vid + "/%sy_spatial_fisher_vectors_k_256_descriptor.fvecs" % desc_key
+            DESC_MBHX_FILE = VIDEOS_WORKDIR + vid + "/%sx_fisher_vectors_k_256_descriptor.fvecs" % desc_key
+            DESC_MBHX_SFV_FILE = VIDEOS_WORKDIR + vid + "/%sx_spatial_fisher_vectors_k_256_descriptor.fvecs" % desc_key
+            DESC_MBHY_FILE = VIDEOS_WORKDIR + vid + "/%sy_fisher_vectors_k_256_descriptor.fvecs" % desc_key
+            DESC_MBHY_SFV_FILE = VIDEOS_WORKDIR + vid + "/%sy_spatial_fisher_vectors_k_256_descriptor.fvecs" % desc_key
             filenames.append(DESC_MBHX_FILE)
             filenames.append(DESC_MBHX_SFV_FILE)
             filenames.append(DESC_MBHY_FILE)
@@ -829,7 +834,7 @@ def load_descriptors(event_class, video_list_filename, desctype, clipids = None)
     filenames = []
     
     for vid in video_list:
-        DESC_FILE = MED_DIR + "videos_workdir/" + vid + "/%s.fvecs" % desc_key
+        DESC_FILE = VIDEOS_WORKDIR + vid + "/%s.fvecs" % desc_key
         filenames.append(DESC_FILE)
         
     p = Pool(10)

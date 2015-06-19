@@ -22,6 +22,10 @@ USAGE_STRING="
 #
 # --output-directory DIR
 #
+# --collection-dir DIR
+#     If your events are defined in a separate collection directory, specify it here.
+#     This defaults to the package's base directory, and dictates where descriptors will be saved.
+#
 # RETURN VALUE (non-parallel): number of missing videos
 #
 # Requires all components to be compiled.
@@ -47,7 +51,7 @@ source processing/usr/scripts/bash_utils.sh
 EVENT_LIST=()
 VIDEO_LIST=()
 OUTPUT_DIRECTORY=""
-
+COLLECTION_DIR=${COLLECTION_DIR:='./'}
 while [[ $# > 0 ]]
 	do
 	key="$1"
@@ -94,6 +98,10 @@ while [[ $# > 0 ]]
 		--overwrite-all)
 		OVERWRITE_ALL=YES
 		;;
+		--collection-dir)
+		COLLECTION_DIR="$2"
+		shift
+		;;
 		*)
 		# Event name here
 		EVENT_NAME="$key"
@@ -134,6 +142,7 @@ else
 	log_WARN "Couldn't find \"lockfile\", scores will be computed in single-threaded mode."
 fi
 
+export COLLECTION_DIR
 python ${COMPUTE_SCORES_SCRIPT_PY} --videos <( for (( i=0; i < ${#VIDEO_LIST[@]}; i++ )); do echo ${VIDEO_LIST[${i}]}; done )\
                     --events <( for (( i=0; i < ${#EVENT_LIST[@]}; i++ )); do echo ${EVENT_LIST[${i}]}; done ) --output-directory ${OUTPUT_DIRECTORY}
 

@@ -3,7 +3,7 @@
 # Xavier Martin xavier.martin@inria.fr
 
 USAGE_STRING="
-# Usage: event_init.sh \"EVENT_NAME\" [ --positive-vids POSITIVE_LIST.TXT ] [ --background-vids BG_LIST.TXT ] [ --overwrite ] [ --ignore-missing ]
+# Usage: event_init.sh \"EVENT_NAME\" [ --positive-vids POSITIVE_LIST.TXT ] [ --background-vids BG_LIST.TXT ] [ --overwrite ] [ --ignore-missing ] [ --collection-dir DIR ]
 #
 #	--positive-vids POSITIVE_LIST.TXT
 #		contains list of positive videos
@@ -23,6 +23,10 @@ USAGE_STRING="
 #
 #	--check-missing
 #		ensures all videos exist (slow over NFS)
+#
+# --collection-dir DIR
+#     If your events are defined in a separate collection directory, specify it here.
+#     This defaults to the package's base directory, and dictates where descriptors will be saved.
 #
 # Prepares the directory structure, creates a job queue.
 # Does not overwrite existing data unless explicitly asked.
@@ -52,6 +56,9 @@ POSITIVE_FILE=""
 CHANNELS_FILE=""
 OVERWRITE=NO
 CHECK_MISSING=NO
+
+# accept collection dir as environment variable
+COLLECTION_DIR=${COLLECTION_DIR:='./'}
 
 while [[ $# > 0 ]]
 	do
@@ -84,6 +91,10 @@ while [[ $# > 0 ]]
 		--check-missing)
 		CHECK_MISSING=YES
 		;;
+		--collection-dir)
+		COLLECTION_DIR="$2"
+		shift
+		;;
 		*)
 		# Event name here
 		EVENT_NAME=$key
@@ -96,10 +107,11 @@ if [[ "$EVENT_NAME" == "" ]]; then
 	echo "$USAGE_STRING"
 	exit 1
 fi
+
 echo      "--------------------"
 log_TITLE "Event initialization"
 
-EV_DIR="events/${EVENT_NAME}"
+EV_DIR="${COLLECTION_DIR}/events/${EVENT_NAME}"
 WORK_DIR="$EV_DIR/workdir"
 mkdir -p "$WORK_DIR"
 
@@ -108,9 +120,11 @@ if [[ "$POSITIVE_FILE" == "" ]]; then POSITIVE_FILE="$EV_DIR/positive.txt"; fi
 if [[ "$BACKGROUND_FILE" == "" ]]; then BACKGROUND_FILE="$EV_DIR/background.txt"; fi
 COMP_DESC_QUEUE_FILE="$WORK_DIR/compute_descriptors_queue"
 
+
 log_INFO "${TXT_BOLD}Creating \"$EVENT_NAME\"${TXT_RESET} (overwrite=${OVERWRITE}, check-missing=${CHECK_MISSING})"
 log_INFO "Positive videos: \"$POSITIVE_FILE\""
 log_INFO "Background videos: \"$BACKGROUND_FILE\""
+log_INFO "Collection directory: \"${COLLECTION_DIR}\""
 log_INFO ""
 
 #
@@ -153,7 +167,7 @@ if [[ $CHECK_MISSING == YES ]]; then
 	
 	while read -r video; do
 		log_INFO "Checking ${video}"
-		if [[ ! -e "videos/$video" ]]; then
+		if [[ ! -e "${COLLECTION_DIR}/videos/$video" ]]; then
 			echo "$video" >> missing_videos.txt
 			NB_MISSING=$(( $NB_MISSING + 1 ))
 		else
@@ -163,7 +177,7 @@ if [[ $CHECK_MISSING == YES ]]; then
 	done < "$POSITIVE_FILE"
 	while read -r video; do
 		log_INFO "Checking ${video}"
-		if [[ ! -e "videos/$video" ]]; then
+		if [[ ! -e "${COLLECTION_DIR}/videos/$video" ]]; then
 			echo "$video" >> missing_videos.txt
 			NB_MISSING=$(( $NB_MISSING + 1 ))
 		else
