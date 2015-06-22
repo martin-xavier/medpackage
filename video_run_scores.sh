@@ -1,6 +1,6 @@
 #!/bin/bash
 # INRIA LEAR team, 2015
-# Xavier Martin xavier.martin@inria.fr
+# Xavier Martin xavier.martin>at<inria.fr
 
 USAGE_STRING="
 # Usage: video_run_scores.sh [--event \"EVENT_NAME\"]* [--event-list \"FILENAME\"]* [--video \"VIDNAME\"]* [--video-list \"FILENAME\"]* [ --force-start ] [ --overwrite-all ]

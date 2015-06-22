@@ -1,6 +1,6 @@
 #!/bin/bash
 # INRIA LEAR team, 2015
-# Xavier Martin xavier.martin@inria.fr
+# Xavier Martin xavier.martin>at<inria.fr
 
 USAGE_STRING="
 # Usage: event_run_training.sh \"EVENT_NAME\" [ --collection-dir DIR ]
