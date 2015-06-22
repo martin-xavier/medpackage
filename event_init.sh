@@ -1,6 +1,6 @@
 #!/bin/bash
 # INRIA LEAR team, 2015
-# Xavier Martin xavier.martin@inria.fr
+# Xavier Martin xavier.martin>at<inria.fr
 
 USAGE_STRING="
 # Usage: event_init.sh \"EVENT_NAME\" [ --positive-vids POSITIVE_LIST.TXT ] [ --background-vids BG_LIST.TXT ] [ --overwrite ] [ --ignore-missing ] [ --collection-dir DIR ]

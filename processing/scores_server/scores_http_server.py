@@ -194,6 +194,7 @@ class EventRecognitionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         nb_results = int(argDict.get("nb_results", 10))
         
         classifiername = argDict.get("classifiername", "none")
+        classifiername = classifiername.replace('_', ' ')
 
         output_dict = collections.OrderedDict()
         output_dict["meanscore"] = 0.0 # placeholder value
