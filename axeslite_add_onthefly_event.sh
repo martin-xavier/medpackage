@@ -166,6 +166,7 @@ fi
 
 UUID=`uuidgen`
 TMPFILE="/tmp/med_onthefly_${UUID}.tmp"
+trap "rm ${TMPFILE}" EXIT HUP INT QUIT PIPE TERM
 
 # Create the event
 echo "Creating event.."
@@ -178,6 +179,8 @@ echo "Scoring videos.."
 
 ( for (( i = 0; i < ${#SCORE_VIDEOS[@]}; i++ )); do echo ${SCORE_VIDEOS[${i}]}; done ) > ${TMPFILE}
 ./video_run_scores.sh --event "${EVENT_NAME}" --video-list ${TMPFILE} --output-directory "${COLLECTION_DIR}/scores_MED/"
+
+rm ${TMPFILE}
 
 # Signal LIMAS
 echo "Signaling LIMAS.."
