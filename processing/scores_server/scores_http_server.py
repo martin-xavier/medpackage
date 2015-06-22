@@ -231,10 +231,9 @@ class EventRecognitionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     video = video.split('.')
                     video = video[:-1]
                     video = '.'.join(video)
-                    formattedLine = '%f /%s/s%09d\n' % (score, video, shot)
                     
-                    
-                    l = formattedLine.split()
+                    l = ['%f' % score, "/%s/s%09d" % (video, shot) ]
+                    print l
                     
             except EOFError:
                 return -1
