@@ -201,12 +201,12 @@ class EventRecognitionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         
         # Test if the format is AXES-compliant
         isCorrectFormat = subprocess.call("\
-        read -r SCORE VIDID MISC < tennis.scores;\
+        read -r SCORE VIDID MISC < \"%s/%s.scores\";\
         if [ \"$MISC\" == \"\" ]; then\
         	exit 1;\
         else\
         	exit 0;\
-        fi", shell=True)
+        fi" % (self.scoredir, classifiername), shell=True)
 
         f = open("%s/%s.scores" % (self.scoredir, classifiername), 'r')
         
@@ -217,6 +217,8 @@ class EventRecognitionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         for i in range(nb_results):
             try:
                 l = f.readline().split()
+                if l == []:
+                    break
                 
                 if not isCorrectFormat:
                     line = l
@@ -237,6 +239,8 @@ class EventRecognitionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             except EOFError:
                 return -1
             
+
+                
             tmp_res = collections.OrderedDict()
             tmp_res["id"] = l[1]
             score = float(l[0])

@@ -52,7 +52,7 @@ If you want to store your videos in a specific directory, export the following v
 
 export COLLECTION_DIR="/path/to/my/collection"
 
-And store your videos there. Alternatively, use the "--collection-dir" option available on all scripts.
+And store your videos in "COLLECTION_DIR/videos". Alternatively, use the "--collection-dir" option available on all scripts.
 
 
 When the video storage is sorted out, you are ready to initialize your event.
