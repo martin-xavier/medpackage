@@ -1,0 +1,39 @@
+AXES-Lite
+---------
+
+#############################
+1) DOWNLOAD BACKGROUND VIDEOS
+#############################
+To use MED as on-the-fly event generator, you first need to download several background videos to train your classifiers.
+Ideally, you should use more than 100 background videos and select them carefully to be "neutral".
+
+However, you can use the provided script to download some random creative-commons-licensed videos from youtube:
+
+./youtube_download_videos.sh
+
+#############################
+2) EXTRACT DESCRIPTORS
+#############################
+When you are happy with your background videos, extract their descriptors with:
+
+./video_run_descriptor_extraction.sh
+
+
+#############################
+3) RUN SCORE SERVER
+#############################
+LIMAS expects an HTTP server to publish your event's scores, you can run it with:
+
+./run_event_score_server.sh
+
+
+#############################
+4) CREATE EVENTS
+#############################
+You can now generate events on the fly with:
+
+./axeslite_add_onthefly_event.sh
+
+
+
+
