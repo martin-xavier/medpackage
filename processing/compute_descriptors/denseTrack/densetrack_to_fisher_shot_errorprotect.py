@@ -15,7 +15,8 @@ from yael import yael
 from yael import ynumpy
 
 MED_BASEDIR=os.getenv("MED_BASEDIR")
-sys.path.insert(0, MED_BASEDIR+'usr/fv4a')
+#sys.path.insert(0, MED_BASEDIR+'usr/fv4a')
+sys.path.insert(0, MED_BASEDIR+'compute_descriptors/denseTrack/fv4a')
 from fisher_vector import descriptors_to_fisher_vector
 from fisher_vector import descriptors_to_spatial_fisher_vector
 from utils import grouper
