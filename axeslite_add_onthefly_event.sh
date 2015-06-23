@@ -31,7 +31,7 @@ USAGE_STRING="
 #
 #   --collection-dir DIR
 #     If your events are defined in a separate collection directory, specify it here.
-#     This defaults to the package's base directory, and dictates where descriptors will be saved.
+#     This defaults to axes-lite's collection, and dictates where descriptors will be saved.
 #		
 "
 #
@@ -67,7 +67,9 @@ NB_POSITIVE=1
 # hidden option
 EVENT_NAME=""
 
-COLLECTION_DIR=${COLLECTION_DIR:="./"}
+#COLLECTION_DIR=${COLLECTION_DIR:="./"}
+
+COLLECTION_DIR=`python axeslite_collection_path.py`
 
 while [[ $# > 0 ]]
 	do
@@ -137,6 +139,7 @@ while [[ $# > 0 ]]
 	shift
 done
 
+export COLLECTION_DIR
 
 if [ "$EVENT_NAME" == "" ]; then
 	echo "${USAGE_STRING}"

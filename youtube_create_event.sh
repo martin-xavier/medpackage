@@ -29,6 +29,9 @@ USAGE_STRING="
 #
 #   --use-any-license
 #       Default: use only creative commons.
+#   --collection-dir DIR
+#     If your events are defined in a separate collection directory, specify it here.
+#     This defaults to the package's base directory, and dictates where descriptors will be saved.
 #		
 "
 
@@ -60,6 +63,8 @@ EVENT_NAME=""
 
 SIZE_APPEND="&filters=short"
 LICENSE_APPEND=",creativecommons"
+
+COLLECTION_DIR=${COLLECTION_DIR:='./'}
 
 while [[ $# > 0 ]]
 	do
@@ -111,6 +116,10 @@ while [[ $# > 0 ]]
 		;;
 		--use-any-license)
 		LICENSE_APPEND=""
+		;;
+		--collection-dir)
+		COLLECTION_DIR="$2"
+		shift
 		;;
 		--event-name)
 		# hidden option

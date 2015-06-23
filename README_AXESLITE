@@ -1,6 +1,11 @@
 AXES-Lite
 ---------
 
+########
+0) SETUP
+########
+Run ./axeslite_setup.sh to create softlinks to 'config.json'.
+
 #############################
 1) DOWNLOAD BACKGROUND VIDEOS
 #############################
